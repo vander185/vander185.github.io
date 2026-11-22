@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.vander185.notes",
+        "sha256_cert_fingerprints": ["B3:86:48:CF:2F:95:31:F8:FB:9E:01:26:B8:F2:AB:27:AA:58:CE:6E:BA:45:C0:36:27:48:AF:78:F5:10:27:CB"]
+      }
+    }]
