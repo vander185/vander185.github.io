@@ -64,6 +64,12 @@ body:not(:is([data-state=listening],[data-state=speaking])) #orb svg.stop{displa
 #cf button{background:linear-gradient(90deg,var(--a1),var(--a2));border:0;border-radius:12px;color:#140b1c;font-weight:700;padding:0 14px}
 body.locked .panel{visibility:hidden}
 body.locked .stage:after{content:'🔒 Téléphone verrouillé : tes notes restent cachées';display:block;margin-top:16px;font-size:12.5px;color:var(--mut)}
+.vx{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.vx h3{margin:0;font-size:16px}.vx p{margin:0;color:#c9c5d6;font-size:14px}
+.vx .big{background:linear-gradient(90deg,var(--a1),var(--a2));border:0;border-radius:14px;color:#140b1c;font:700 15px/1 inherit;padding:14px}
+.vx .sec{background:#ffffff0f;border:0;border-radius:12px;color:var(--txt);font:600 14px/1 inherit;padding:12px}
+.seg{display:flex;background:#0f0f18;border-radius:12px;padding:3px}.seg button{flex:1;border:0;background:none;color:var(--mut);font:600 14px/1 inherit;padding:10px;border-radius:10px}.seg button.on{background:#2b2442;color:#fff}
+.dots{display:flex;gap:8px;justify-content:center}.dots i{width:14px;height:14px;border-radius:50%;background:#2a2838}.dots i.on{background:linear-gradient(135deg,var(--a1),var(--a2))}
 #toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));translate:-50% 20px;background:#26233a;color:#fff;padding:10px 16px;border-radius:14px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;box-shadow:0 8px 30px #0008;max-width:88vw;text-align:center}
 #toast.show{opacity:1;translate:-50% 0}
 </style>
@@ -83,7 +89,7 @@ body.locked .stage:after{content:'🔒 Téléphone verrouillé : tes notes reste
   <div id="log"></div>
 </div>
 <section class="panel">
-  <nav class="tabs"><button data-t="notes" class="on">Notes</button><button data-t="rappels">Rappels<span id="nr"></span></button><button data-t="contacts">Contacts</button></nav>
+  <nav class="tabs"><button data-t="notes" class="on">Notes</button><button data-t="rappels">Rappels<span id="nr"></span></button><button data-t="contacts">Contacts</button><button data-t="voix" id="tvoix" hidden>Ma voix</button></nav>
   <div id="list"></div>
 </section>
 <div id="toast"></div>
