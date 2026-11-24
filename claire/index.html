@@ -27,6 +27,17 @@ body[data-state=speaking] .aur{opacity:.8}
 header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 0}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;letter-spacing:-.01em}
 .brand .lg{width:34px;height:34px;filter:drop-shadow(0 4px 10px #9f86ff55)}
+.hr{display:flex;align-items:center;gap:8px}
+#key{width:38px;height:38px;border-radius:50%;background:var(--card);border:1px solid #ff8fb388;color:var(--txt);font-size:16px;cursor:pointer;position:relative;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+#key:not(.ok):after{content:'';position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--p)}
+#key.ok{border-color:var(--line);opacity:.75}
+#keybox{position:fixed;inset:0;z-index:20;background:#05040bcc;display:flex;align-items:center;justify-content:center;padding:20px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#keybox[hidden]{display:none}
+.kcard{width:100%;max-width:400px;background:#171325;border:1px solid var(--line);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px #000a}
+.kcard h3{margin:0;font-size:18px}.kcard p{margin:0;color:#cbc5dc;font-size:14px}
+.kcard input{background:#0c0a14;border:1px solid #ffffff22;color:#fff;border-radius:14px;padding:14px;font:600 20px/1 ui-monospace,monospace;letter-spacing:.12em;text-align:center;text-transform:uppercase;outline:none}
+.kcard input:focus{border-color:#9f86ff}
+.kb{display:flex;gap:8px}.kb button{flex:1;border:0;border-radius:14px;padding:13px;font:700 15px/1 inherit;background:var(--grad);color:#1c0f2e;cursor:pointer}.kb .kn{background:#ffffff12;color:var(--txt)}
 #wake{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:6px 8px 6px 12px;color:var(--txt);font:inherit;cursor:pointer;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 #wake b{display:flex;flex-direction:column;align-items:flex-start;font-size:12.5px;font-weight:600;line-height:1.15}
 #wake small{font-size:10.5px;font-weight:500;color:var(--mut)}
@@ -128,8 +139,14 @@ body.locked .stage:after{content:'🔒 Téléphone verrouillé : tes notes reste
   </g>
 </svg>
 Claire</div>
-  <button id="wake" type="button"><b>Réveil vocal<small></small></b><i></i></button>
+  <div class="hr"><button id="key" type="button" aria-label="Code personnel">🔑</button><button id="wake" type="button"><b>Réveil vocal<small></small></b><i></i></button></div>
 </header>
+<div id="keybox" hidden><form id="keyform" class="kcard">
+  <h3>🔑 Ton code personnel</h3>
+  <p>Sans ce code, Claire refuse de lire tes e-mails, ton agenda, tes appels et ta mémoire. Il reste seulement sur ce téléphone.</p>
+  <input id="keyin" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX" maxlength="20">
+  <div class="kb"><button type="button" id="keyno" class="kn">Plus tard</button><button>Enregistrer</button></div>
+</form></div>
 <div class="hello"><h2 id="hello">Bonjour <span>Ahmed</span></h2><p id="today"></p></div>
 <div class="stage">
   <button id="orb" type="button" aria-label="Parler à Claire">
@@ -148,6 +165,8 @@ Claire</div>
   <button data-q="">🔎 Chercher</button>
   <button data-q="">📝 Une note</button>
   <button data-q="">⏰ Un rappel</button>
+  <button data-q="">🔁 Déplacer un rendez-vous</button>
+  <button data-q="Quels rappels WhatsApp sont programmés ?">💬 Rappels WhatsApp</button>
 </div>
 <section class="panel">
   <div class="grab"></div>
