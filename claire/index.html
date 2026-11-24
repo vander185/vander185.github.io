@@ -50,6 +50,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:12p
 #key.ok{border-color:var(--line);opacity:.75}
 #keybox{position:fixed;inset:0;z-index:20;background:#05040bcc;display:flex;align-items:center;justify-content:center;padding:20px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #keybox[hidden]{display:none}
+#micbox{position:fixed;inset:0;z-index:20;background:#05040bcc;display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#micbox[hidden]{display:none}
+.meter{height:12px;border-radius:99px;background:#0c0a14;border:1px solid #ffffff1a;overflow:hidden}
+.meter i{display:block;height:100%;width:0;border-radius:99px;background:#6f6a85;transition:width .08s linear}
+.meter i.ok{background:linear-gradient(90deg,#5fd39a,#9be8c1)}.meter i.fort{background:linear-gradient(90deg,#ffc78f,#ff5d7a)}
+#micr{width:100%;accent-color:#9f86ff;height:32px;margin:4px 0 0}
+.mscale{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-top:-6px}
+.mnow{font-size:14px}.mnow b{color:#fff}
 .kcard{width:100%;max-width:400px;background:#171325;border:1px solid var(--line);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px #000a}
 .kcard h3{margin:0;font-size:18px}.kcard p{margin:0;color:#cbc5dc;font-size:14px}
 .kcard input{background:#0c0a14;border:1px solid #ffffff22;color:#fff;border-radius:14px;padding:14px;font:600 20px/1 ui-monospace,monospace;letter-spacing:.12em;text-align:center;text-transform:uppercase;outline:none}
@@ -158,6 +166,15 @@ body.locked .stage:after{content:'🔒 Téléphone verrouillé : tes notes reste
 Claire</div>
   <div class="hr"><a id="reg" href="reglages.html" aria-label="Réglages">⚙️</a><button id="key" type="button" aria-label="Code personnel">🔑</button><button id="wake" type="button"><b>Réveil vocal<small></small></b><i></i></button></div>
 </header>
+<div id="micbox" class="sheet" hidden><div class="kcard">
+  <h3>🎙️ Sensibilité du micro</h3>
+  <p>Règle à quel point Claire t'entend. Parle normalement : la barre doit monter dans le vert.</p>
+  <div class="meter"><i id="micbar"></i></div>
+  <input type="range" id="micr" min="0" max="4" step="1" aria-label="Sensibilité">
+  <div class="mscale"><span>Moins sensible</span><span>Plus sensible</span></div>
+  <p class="mnow"><b id="micn"></b> · <span id="micd"></span></p>
+  <div class="kb"><button type="button" id="micok">C'est bon</button></div>
+</div></div>
 <div id="keybox" hidden><form id="keyform" class="kcard">
   <h3>🔑 Ton code personnel</h3>
   <p>Sans ce code, Claire refuse de lire tes e-mails, ton agenda, tes appels et ta mémoire. Il reste seulement sur ce téléphone.</p>
