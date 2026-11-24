@@ -35,13 +35,17 @@ ol{padding-left:20px;margin:6px 0}a{color:#cfc4ff}
 #toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);background:#1d1830f2;border:1px solid #9f86ff55;padding:11px 18px;border-radius:22px;font-size:14px;font-weight:600;display:none;max-width:92%;text-align:center;z-index:9}
 .urg{color:#ff8f8f}
 #lock{text-align:center;padding:60px 10px}
+.back{display:inline-block;margin:0 0 10px;padding:8px 14px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--txt);text-decoration:none;font-weight:600;font-size:14px}
+.c{-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+h2{letter-spacing:.01em}
 </style>
 </head>
 <body>
 <div id="toast"></div>
+<a href="./" class="back">← Claire</a>
 <h1>⚙️ Réglages de <span>Claire</span></h1>
 <p class="mut">Page privée : ne partage pas ce lien.</p>
-<div id="lock" hidden><p>🔒 Ouvre cette page avec ton lien personnel.</p></div>
+<div id="lock" hidden><p>🔒 Entre d'abord ton code personnel dans l'appli Claire (bouton 🔑).</p><p><a href="./">← Retour à Claire</a></p></div>
 <div id="app" hidden>
   <h2>💬 WhatsApp et briefing du matin</h2>
   <div class="c">
@@ -84,15 +88,19 @@ const API = 'https://vmhznuivhwwfphmypsic.supabase.co/functions/v1/claire-google
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const JOURS = [[1, 'Lundi'], [2, 'Mardi'], [3, 'Mercredi'], [4, 'Jeudi'], [5, 'Vendredi'], [6, 'Samedi'], [0, 'Dimanche']];
-let L = '';
+let L = '', CODE = '';
 try { const h = new URLSearchParams(location.hash.slice(1)).get('l'); if (h) { localStorage.setItem('claire_reglages', h); history.replaceState(null, '', location.pathname); } L = localStorage.getItem('claire_reglages') || ''; } catch (e) { L = new URLSearchParams(location.hash.slice(1)).get('l') || ''; }
+// sans lien personnel : le code personnel entré dans l'appli Claire suffit
+try { CODE = JSON.parse(localStorage.getItem('claire_cle') || '""') || ''; } catch (e) {}
+const API2 = 'https://vmhznuivhwwfphmypsic.supabase.co/functions/v1/claire-plus/web/reglages';
 function toast(t, ms = 2800) { const e = $('#toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(e._t); e._t = setTimeout(() => e.style.display = 'none', ms); }
 async function call(op, data = {}, btn) {
   if (btn) btn.disabled = true;
   try {
-    const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ l: L, op, ...data }) });
+    const r = L ? await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ l: L, op, ...data }) })
+      : await fetch(API2, { method: 'POST', headers: { 'content-type': 'application/json', 'x-claire-app': CODE }, body: JSON.stringify({ op, ...data }) });
     const j = await r.json();
-    if (r.status === 403) { $('#app').hidden = true; $('#lock').hidden = false; try { localStorage.removeItem('claire_reglages'); } catch (e) {} return; }
+    if (r.status === 403 || r.status === 429) { $('#app').hidden = true; $('#lock').hidden = false; if (L) try { localStorage.removeItem('claire_reglages'); } catch (e) {} if (j.erreur) toast(j.erreur, 5000); return; }
     if (j.msg) toast(j.msg, j.msg.startsWith('⚠️') ? 6000 : 2800);
     draw(j);
   } catch (e) { toast('⚠️ Pas de connexion, réessaie.'); }
@@ -124,7 +132,7 @@ document.addEventListener('click', e => {
   if (b.dataset.del && confirm('Supprimer ce contact ?')) call('del', { id: b.dataset.del }, b);
   if (b.dataset.mem && confirm('Effacer ce souvenir ?')) call('mem_del', { id: b.dataset.mem }, b);
 });
-if (L) call('get'); else $('#lock').hidden = false;
+if (L || CODE) call('get'); else $('#lock').hidden = false;
 </script>
 </body>
 </html>
