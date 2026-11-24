@@ -3,92 +3,150 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b0b12">
+<meta name="theme-color" content="#0c0a16">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob: data:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://fr.wikipedia.org https://*.elevenlabs.io wss://*.elevenlabs.io https://*.livekit.cloud wss://*.livekit.cloud; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'">
 <title>Claire</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-:root{--bg:#0b0b12;--card:#15151f;--line:#ffffff12;--txt:#f4f2f7;--mut:#8d8a9b;--a1:#ff8fb1;--a2:#a78bfa;--a3:#ffd29d}
+:root{--bg:#0c0a16;--card:#ffffff0b;--card2:#ffffff12;--line:#ffffff14;--txt:#f6f3fb;--mut:#a09bb4;--dim:#6f6a85;--p:#ff8fb3;--v:#9f86ff;--o:#ffc78f;--grad:linear-gradient(120deg,var(--p),var(--v) 55%,var(--o))}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:16px/1.45 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif}
-body{display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);background:radial-gradient(120% 60% at 50% 0%,#1b1530 0%,var(--bg) 60%) fixed}
-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 0}
-header h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
-header h1 span{background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
-#wake{display:flex;flex-direction:column;align-items:flex-end;background:none;border:0;color:var(--txt);font:inherit;cursor:pointer;padding:6px 0}
-#wake b{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
-#wake b i{width:34px;height:20px;border-radius:99px;background:#2a2838;position:relative;transition:.25s}
-#wake b i:after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#bbb;transition:.25s}
-#wake.on b i{background:linear-gradient(90deg,var(--a1),var(--a2))}
-#wake.on b i:after{left:16px;background:#fff}
-#wake small{font-size:11px;color:var(--mut)}
-.stage{display:flex;flex-direction:column;align-items:center;padding:18px 20px 6px}
-#orb{width:190px;height:190px;border-radius:50%;border:0;cursor:pointer;position:relative;background:none;padding:0}
-#orb .core{position:absolute;inset:18px;border-radius:50%;background:conic-gradient(from 210deg,var(--a1),var(--a2),var(--a3),var(--a1));filter:blur(.5px);box-shadow:0 0 60px #a78bfa55,inset 0 0 40px #ffffff30;animation:spin 14s linear infinite,breathe 4.5s ease-in-out infinite}
-#orb .glass{position:absolute;inset:18px;border-radius:50%;background:radial-gradient(60% 60% at 35% 30%,#ffffff55,transparent 60%),radial-gradient(80% 80% at 50% 60%,transparent 50%,#0b0b1288)}
-#orb .ring{position:absolute;inset:0;border-radius:50%;border:2px solid #a78bfa44;opacity:0}
-#orb svg{position:absolute;inset:0;margin:auto;width:46px;height:46px;fill:#fff;opacity:.92;filter:drop-shadow(0 2px 6px #0006)}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:16px/1.45 -apple-system,"SF Pro Display",system-ui,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+body{display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);overflow:hidden}
+/* aurore en fond */
+.aur{position:fixed;inset:-20% -20% auto;height:75vh;z-index:-1;filter:blur(60px);opacity:.55;pointer-events:none}
+.aur i{position:absolute;border-radius:50%;animation:drift 18s ease-in-out infinite alternate}
+.aur i:nth-child(1){width:55vw;height:55vw;left:5%;top:18%;background:#ff8fb355}
+.aur i:nth-child(2){width:60vw;height:60vw;right:0;top:5%;background:#9f86ff66;animation-duration:22s}
+.aur i:nth-child(3){width:40vw;height:40vw;left:35%;top:40%;background:#ffc78f33;animation-duration:26s}
+@keyframes drift{to{transform:translate(6vw,4vh) scale(1.12)}}
+body[data-state=speaking] .aur{opacity:.8}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 0}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;letter-spacing:-.01em}
+.brand .lg{width:34px;height:34px;filter:drop-shadow(0 4px 10px #9f86ff55)}
+#wake{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:6px 8px 6px 12px;color:var(--txt);font:inherit;cursor:pointer;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+#wake b{display:flex;flex-direction:column;align-items:flex-start;font-size:12.5px;font-weight:600;line-height:1.15}
+#wake small{font-size:10.5px;font-weight:500;color:var(--mut)}
+#wake i{order:2;width:36px;height:22px;border-radius:99px;background:#2c2840;position:relative;transition:.25s;flex:none}
+#wake i:after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#bdb8cc;transition:.25s}
+#wake.on i{background:var(--grad)}
+#wake.on i:after{left:17px;background:#fff}
+.hello{padding:18px 22px 0}
+.hello h2{margin:0;font-size:27px;font-weight:700;letter-spacing:-.02em}
+.hello h2 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hello p{margin:3px 0 0;color:var(--mut);font-size:14.5px}
+.stage{display:flex;flex-direction:column;align-items:center;padding:14px 20px 4px}
+/* la perle de Claire */
+#orb{width:200px;height:200px;border-radius:50%;border:0;padding:0;cursor:pointer;position:relative;background:none;outline:none}
+#orb .halo{position:absolute;inset:-14px;border-radius:50%;background:conic-gradient(from 0deg,var(--p),var(--v),var(--o),var(--p));filter:blur(26px);opacity:.45;animation:spin 12s linear infinite}
+#orb .core{position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#ffffff70,transparent 45%),linear-gradient(140deg,var(--p),var(--v) 55%,var(--o));box-shadow:inset 0 -18px 40px #3b1f6e55,0 20px 50px #9f86ff44;transition:transform .2s}
+#orb .ring{position:absolute;inset:6px;border-radius:50%;border:2px solid #ffffff55;opacity:0}
+#orb .bars{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:7px}
+#orb .bars i{width:9px;height:18px;border-radius:9px;background:#fff;box-shadow:0 3px 10px #3b1f6e44;transition:height .08s}
+#orb:active .core{transform:scale(.97)}
+body[data-state=idle] #orb .core,body[data-state=wake] #orb .core{animation:breathe 4.5s ease-in-out infinite}
 body[data-state=listening] #orb .ring{animation:ring 1.6s ease-out infinite}
-body[data-state=listening] #orb .core{animation:spin 6s linear infinite,breathe 1.6s ease-in-out infinite}
-body[data-state=speaking] #orb .core{animation:spin 3s linear infinite,talk .5s ease-in-out infinite alternate}
-body[data-state=connecting] #orb .core{animation:spin 1.2s linear infinite;opacity:.7}
-body[data-state=wake] #orb .core{animation:spin 20s linear infinite,breathe 6s ease-in-out infinite;opacity:.75}
-body:is([data-state=listening],[data-state=speaking]) #orb svg.mic{display:none}
-body:not(:is([data-state=listening],[data-state=speaking])) #orb svg.stop{display:none}
+body[data-state=connecting] #orb .halo{animation:spin 1.2s linear infinite;opacity:.7}
+body[data-state=speaking] #orb .halo{opacity:.75}
 @keyframes spin{to{rotate:360deg}}
-@keyframes breathe{50%{scale:1.04}}
-@keyframes talk{from{scale:.97}to{scale:1.09}}
-@keyframes ring{0%{opacity:.9;scale:.9}100%{opacity:0;scale:1.25}}
-#status{margin-top:14px;font-size:15px;color:#cfcbe0;min-height:22px;text-align:center}
-#log{width:100%;max-width:520px;max-height:22vh;overflow-y:auto;margin-top:10px;display:flex;flex-direction:column;gap:6px;padding:0 4px;mask-image:linear-gradient(transparent,#000 18px)}
-.msg{max-width:85%;padding:8px 12px;border-radius:16px;font-size:14.5px}
-.msg.user{align-self:flex-end;background:#2b2442;border-bottom-right-radius:5px}
-.msg.agent{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-bottom-left-radius:5px}
-.panel{flex:1;min-height:0;display:flex;flex-direction:column;background:#11111a;border-top:1px solid var(--line);border-radius:24px 24px 0 0;margin-top:8px}
-.tabs{display:flex;gap:6px;padding:12px 14px 6px}
-.tabs button{flex:1;background:none;border:0;color:var(--mut);font:600 14px/1 inherit;padding:10px 0;border-radius:12px;cursor:pointer;position:relative}
-.tabs button.on{background:#1d1b2b;color:var(--txt)}
-#nr:not(:empty){display:inline-block;margin-left:6px;background:var(--a1);color:#1a0b12;border-radius:99px;font-size:11px;padding:2px 6px;vertical-align:1px}
-#list{flex:1;overflow-y:auto;padding:4px 14px 18px;display:flex;flex-direction:column;gap:8px}
-.it{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 40px 10px 14px}
-.it b{display:block;font-size:15px}
-.it p{margin:4px 0 0;color:#c9c5d6;font-size:14px;white-space:pre-line}
-.it em{display:block;margin-top:6px;font-style:normal;font-size:12px;color:var(--mut)}
+@keyframes breathe{50%{transform:scale(1.03)}}
+@keyframes ring{0%{opacity:.9;scale:.92}100%{opacity:0;scale:1.22}}
+#status{margin-top:14px;font-size:14.5px;color:#d7d1ea;min-height:21px;text-align:center}
+#log{width:100%;max-width:520px;max-height:20vh;overflow-y:auto;margin-top:8px;display:flex;flex-direction:column;gap:6px;padding:0 4px;-webkit-mask-image:linear-gradient(transparent,#000 16px);mask-image:linear-gradient(transparent,#000 16px)}
+#log:empty{display:none}
+.msg{max-width:84%;padding:8px 13px;border-radius:18px;font-size:14.5px;line-height:1.4}
+.msg.user{align-self:flex-end;background:var(--grad);color:#1c0f2e;border-bottom-right-radius:6px}
+.msg.agent{align-self:flex-start;background:var(--card2);border:1px solid var(--line);border-bottom-left-radius:6px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+/* raccourcis */
+#chips{display:flex;gap:8px;overflow-x:auto;padding:12px 18px 4px;scrollbar-width:none}
+#chips::-webkit-scrollbar{display:none}
+#chips button{flex:none;display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:99px;padding:9px 14px;font:600 13.5px/1 inherit;cursor:pointer;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+#chips button:active{background:var(--card2)}
+/* panneau du bas */
+.panel{flex:1;min-height:0;display:flex;flex-direction:column;background:linear-gradient(#16131f,#110f19);border-top:1px solid var(--line);border-radius:28px 28px 0 0;margin-top:10px;box-shadow:0 -12px 40px #0006}
+.grab{width:38px;height:4px;border-radius:9px;background:#ffffff22;margin:8px auto 0}
+.tabs{display:flex;gap:4px;margin:10px 14px 6px;background:#0c0a14;border-radius:14px;padding:4px}
+.tabs button{flex:1;background:none;border:0;color:var(--mut);font:600 13.5px/1 inherit;padding:10px 0;border-radius:11px;cursor:pointer;position:relative}
+.tabs button.on{background:#262038;color:#fff;box-shadow:0 2px 10px #0005}
+#nr:not(:empty){display:inline-block;margin-left:5px;background:var(--p);color:#2a0b17;border-radius:99px;font-size:10.5px;padding:2px 6px;vertical-align:1px}
+#list{flex:1;overflow-y:auto;padding:6px 14px 20px;display:flex;flex-direction:column;gap:8px}
+.it{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px 42px 11px 15px}
+.it b{display:block;font-size:15px;font-weight:650}
+.it p{margin:4px 0 0;color:#cbc5dc;font-size:14px;white-space:pre-line}
+.it em{display:block;margin-top:6px;font-style:normal;font-size:12px;color:var(--dim)}
 .it.done{opacity:.5}
-.x{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:0;background:#ffffff0d;color:var(--mut);font-size:18px;line-height:1;cursor:pointer}
-.empty{color:var(--mut);text-align:center;font-size:14px;margin:26px 20px}
+.x{position:absolute;top:9px;right:9px;width:28px;height:28px;border-radius:50%;border:0;background:#ffffff0d;color:var(--mut);font-size:17px;line-height:1;cursor:pointer}
+.empty{color:var(--dim);text-align:center;font-size:14px;margin:26px 22px;line-height:1.5}
 #cf{display:flex;gap:6px}
-#cf input{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:10px 12px;font:inherit;font-size:14px}
-#cf button{background:linear-gradient(90deg,var(--a1),var(--a2));border:0;border-radius:12px;color:#140b1c;font-weight:700;padding:0 14px}
-body.locked .panel{visibility:hidden}
-body.locked .stage:after{content:'🔒 Téléphone verrouillé : tes notes restent cachées';display:block;margin-top:16px;font-size:12.5px;color:var(--mut)}
-.vx{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
-.vx h3{margin:0;font-size:16px}.vx p{margin:0;color:#c9c5d6;font-size:14px}
-.vx .big{background:linear-gradient(90deg,var(--a1),var(--a2));border:0;border-radius:14px;color:#140b1c;font:700 15px/1 inherit;padding:14px}
+#cf input{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:13px;padding:11px 12px;font:inherit;font-size:14px;outline:none}
+#cf input:focus{border-color:#9f86ff88}
+#cf button{background:var(--grad);border:0;border-radius:13px;color:#1c0f2e;font-weight:700;padding:0 15px}
+.vx{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.vx h3{margin:0;font-size:16px}.vx p{margin:0;color:#cbc5dc;font-size:14px}
+.vx .big{background:var(--grad);border:0;border-radius:14px;color:#1c0f2e;font:700 15px/1 inherit;padding:14px}
 .vx .sec{background:#ffffff0f;border:0;border-radius:12px;color:var(--txt);font:600 14px/1 inherit;padding:12px}
-.seg{display:flex;background:#0f0f18;border-radius:12px;padding:3px}.seg button{flex:1;border:0;background:none;color:var(--mut);font:600 14px/1 inherit;padding:10px;border-radius:10px}.seg button.on{background:#2b2442;color:#fff}
-.dots{display:flex;gap:8px;justify-content:center}.dots i{width:14px;height:14px;border-radius:50%;background:#2a2838}.dots i.on{background:linear-gradient(135deg,var(--a1),var(--a2))}
-#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));translate:-50% 20px;background:#26233a;color:#fff;padding:10px 16px;border-radius:14px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;box-shadow:0 8px 30px #0008;max-width:88vw;text-align:center}
+.seg{display:flex;background:#0c0a14;border-radius:12px;padding:3px}.seg button{flex:1;border:0;background:none;color:var(--mut);font:600 14px/1 inherit;padding:10px;border-radius:10px}.seg button.on{background:#262038;color:#fff}
+.dots{display:flex;gap:8px;justify-content:center}.dots i{width:14px;height:14px;border-radius:50%;background:#2a2638}.dots i.on{background:var(--grad)}
+body.locked .panel,body.locked #chips{visibility:hidden}
+body.locked .stage:after{content:'🔒 Téléphone verrouillé : tes notes restent cachées';display:block;margin-top:16px;font-size:12.5px;color:var(--mut)}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));translate:-50% 20px;background:#2a2440ee;color:#fff;padding:11px 17px;border-radius:16px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;box-shadow:0 10px 30px #0008;max-width:88vw;text-align:center;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 #toast.show{opacity:1;translate:-50% 0}
+@media (max-height:700px){#orb{width:160px;height:160px}.hello{padding-top:10px}.hello h2{font-size:23px}}
 </style>
 </head>
 <body data-state="idle">
+<div class="aur"><i></i><i></i><i></i></div>
 <header>
-  <h1><span>Claire</span></h1>
-  <button id="wake" type="button"><b>Réveil vocal <i></i></b><small></small></button>
+  <div class="brand"><svg class="lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="hbg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff8fb3"/><stop offset=".48" stop-color="#9f86ff"/><stop offset="1" stop-color="#ffc78f"/>
+    </linearGradient>
+    <radialGradient id="hhl" cx=".22" cy=".12" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="hsh" cx=".8" cy="1" r=".7"><stop offset="0" stop-color="#3b1f6e" stop-opacity=".28"/><stop offset="1" stop-color="#3b1f6e" stop-opacity="0"/></radialGradient>
+    <filter id="hds" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#3a1a66" flood-opacity=".25"/></filter>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#hbg)"/>
+  <rect width="512" height="512" rx="114" fill="url(#hhl)"/>
+  <rect width="512" height="512" rx="114" fill="url(#hsh)"/>
+  <rect x="3" y="3" width="506" height="506" rx="111" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="2"/>
+  <g filter="url(#hds)">
+    <!-- bulle ouverte en forme de C, pointe intégrée en bas à gauche -->
+    <path d="M351 176 A124 124 0 0 0 154 327 L120 394 L200 367 A124 124 0 0 0 351 336"
+          fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- voix -->
+    <g fill="#fff">
+      <rect x="211" y="230" width="22" height="52" rx="11"/>
+      <rect x="251" y="204" width="22" height="104" rx="11"/>
+      <rect x="291" y="222" width="22" height="68" rx="11"/>
+    </g>
+    <!-- petite étincelle : l'intelligence de Claire -->
+    <path d="M392 238 q4 18 22 22 q-18 4 -22 22 q-4 -18 -22 -22 q18 -4 22 -22z" fill="#fff8ec"/>
+  </g>
+</svg>
+Claire</div>
+  <button id="wake" type="button"><b>Réveil vocal<small></small></b><i></i></button>
 </header>
+<div class="hello"><h2 id="hello">Bonjour <span>Ahmed</span></h2><p id="today"></p></div>
 <div class="stage">
   <button id="orb" type="button" aria-label="Parler à Claire">
-    <span class="ring"></span><span class="core"></span><span class="glass"></span>
-    <svg class="mic" viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
-    <svg class="stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2.5"/></svg>
+    <span class="halo"></span><span class="core"></span><span class="ring"></span>
+    <span class="bars"><i></i><i></i><i></i><i></i><i></i></span>
   </button>
   <div id="status"></div>
   <div id="log"></div>
 </div>
+<div id="chips">
+  <button data-q="J'ai des nouveaux e-mails ?">✉️ Mes e-mails</button>
+  <button data-q="Qu'est-ce que j'ai dans mon agenda aujourd'hui et demain ?">📅 Mon agenda</button>
+  <button data-q="Quel temps fait-il aujourd'hui et demain ?">☀️ Météo</button>
+  <button data-q="">🔎 Chercher</button>
+  <button data-q="">📝 Une note</button>
+  <button data-q="">⏰ Un rappel</button>
+</div>
 <section class="panel">
+  <div class="grab"></div>
   <nav class="tabs"><button data-t="notes" class="on">Notes</button><button data-t="rappels">Rappels<span id="nr"></span></button><button data-t="contacts">Contacts</button><button data-t="voix" id="tvoix" hidden>Ma voix</button></nav>
   <div id="list"></div>
 </section>
