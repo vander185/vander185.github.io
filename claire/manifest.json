@@ -5,8 +5,8 @@
   "scope": "./",
   "id": "./",
   "display": "standalone",
-  "background_color": "#0b0b12",
-  "theme_color": "#0b0b12",
+  "background_color": "#081030",
+  "theme_color": "#081030",
   "description": "Assistante vocale personnelle",
   "lang": "fr",
   "icons": [
