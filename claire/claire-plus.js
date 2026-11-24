@@ -36,7 +36,7 @@ async function cxSrv(op, data) {
     var j = await r.json().catch(function () { return {}; });
     if (r.status === 403) return { faux: !0 };
     if (!r.ok) { if (j.erreur) St(j.erreur, 4e3); return null; }
-    cxS = { appels: j.appels || [], contacts: j.contacts || [], google: j.google || "", wa: !!j.wa_key };
+    cxS = { appels: j.appels || [], contacts: j.contacts || [], google: j.google || "", wa: !!j.wa_key, tg: !!j.tg, tgBot: !!j.tg_bot };
     Xe.set("srv", cxS);
     if (j.msg) St(j.msg, 3e3);
     cxEtat(); cd();
@@ -57,7 +57,7 @@ function cxEtat() {
   if (!code) p.push('<button data-go="key" class="pill warn">🔑 Entrer mon code</button>');
   else {
     p.push(cxS.google ? '<span class="pill ok">Google relié</span>' : '<button data-go="reg" class="pill warn">Google à relier</button>');
-    p.push(cxS.wa ? '<span class="pill ok">WhatsApp relié</span>' : '<button data-go="reg" class="pill warn">WhatsApp à relier</button>');
+    p.push(cxS.tg ? '<span class="pill ok">Telegram relié</span>' : cxS.wa ? '<span class="pill ok">WhatsApp relié</span>' : cxS.tgBot ? '<button data-go="tg" class="pill warn">Telegram : envoie ton code</button>' : '<button data-go="reg" class="pill warn">Messages à relier</button>');
     var n = (cxS.appels || []).filter(function (a) { return a.urgence === "haute"; }).length;
     if (n) p.push('<button data-go="appels" class="pill hot">🚨 ' + n + " appel" + (n > 1 ? "s" : "") + " urgent" + (n > 1 ? "s" : "") + "</button>");
   }
@@ -68,6 +68,7 @@ ne("#etat").addEventListener("click", function (e) {
   if (!b) return;
   if (b.dataset.go === "key") ne("#key").click();
   else if (b.dataset.go === "reg") location.href = "reglages.html";
+  else if (b.dataset.go === "tg") St("Dans Telegram, ouvre ton robot Claire et envoie-lui ton code personnel. Ensuite rouvre l'appli.", 7e3);
   else { Qn = "appels"; cd(); ne(".panel").scrollIntoView({ behavior: "smooth" }); }
 });
 

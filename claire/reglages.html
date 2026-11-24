@@ -48,7 +48,8 @@ h2{letter-spacing:.01em}
 <p class="mut">Page privée : ne partage pas ce lien.</p>
 <div id="lock" hidden><p>🔒 Entre d'abord ton code personnel dans l'appli Claire (bouton 🔑).</p><p><a href="./">← Retour à Claire</a></p></div>
 <div id="app" hidden>
-  <h2>💬 WhatsApp et briefing du matin</h2>
+  <h2>💬 Messages de Claire et briefing du matin</h2>
+  <div class="c" id="tgst" hidden></div>
   <div class="c">
     <p class="mut" style="margin:0 0 4px">Pour que Claire t'écrive sur WhatsApp (gratuit, une seule fois) :</p>
     <ol class="mut">
@@ -112,6 +113,8 @@ function draw(j) {
   if (document.activeElement?.id !== 'wa_phone') $('#wa_phone').value = j.wa_phone || '';
   $('#wa_key').value = j.wa_key || ''; $('#briefing_on').checked = !!j.briefing_on; $('#briefing_heure').value = j.briefing_heure || '07:45';
   $('#google').textContent = j.google || 'non';
+  $('#tgst').innerHTML = j.tg ? '✅ <b>Telegram relié</b> : les résumés d\'appels, rappels et briefings de Claire arrivent sur Telegram. WhatsApp n\'est plus nécessaire.' : j.tg_bot ? '📨 <b>Telegram</b> : ouvre ton robot Claire dans Telegram et envoie-lui ton code personnel pour le relier.' : '';
+  $('#tgst').hidden = !j.tg && !j.tg_bot;
   const H = j.horaires || {};
   $('#days').innerHTML = JOURS.map(([d, n]) => `<div class="day"><label style="margin:0;color:var(--txt)"><input type="checkbox" data-d="${d}" ${H[d] ? 'checked' : ''}>${n}</label><input type="number" min="0" max="23" data-a="${d}" value="${H[d]?.[0] ?? 9}"><span>→</span><input type="number" min="1" max="24" data-b="${d}" value="${H[d]?.[1] ?? 18}"></div>`).join('');
   const cs = j.contacts || [];
