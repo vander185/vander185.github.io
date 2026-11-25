@@ -53,7 +53,7 @@ var cxEtatBase = cxEtat;
 cxEtat = function () {
   cxEtatBase();
   var el = ne("#etat");
-  if (el) el.insertAdjacentHTML("beforeend", cxIco("micro", "mic", "Micro", cxMic === 2 ? "ok" : "set", "Sensibilité : " + cxMicNiv[cxMic].n));
+  if (el) el.insertAdjacentHTML("beforeend", cxIco("micro", "mic", "Micro", cxMic === 2 ? "nodot" : "set", "Sensibilité : " + cxMicNiv[cxMic].n));
 };
 ne("#etat").addEventListener("click", function (e) {
   var b = e.target.closest('[data-go="micro"]');

@@ -61,8 +61,9 @@ var cxSvg = {
 };
 /** bouton-icône d'état : vert = OK, orange = à faire, rouge = urgent */
 function cxIco(go, ico, nom, etat, info, badge) {
-  return '<button data-go="' + go + '" data-info="' + $n(info || "") + '" class="ico ' + (etat || "") + '" aria-label="' + $n(nom + " : " + (info || "")) + '">' +
-    '<span class="ic">' + cxSvg[ico] + (badge ? '<b class="bd">' + badge + "</b>" : '<i class="dot"></i>') + "</span><small>" + $n(nom) + "</small></button>";
+  var seul = go === "info" || go === "micro";   // connexion OK : juste l'icône et un point vert
+  return '<button data-go="' + go + '" data-info="' + $n(info || "") + '" class="ico ' + (etat || "") + (seul ? " only" : "") + '" aria-label="' + $n(nom + " : " + (info || "")) + '" title="' + $n(info || nom) + '">' +
+    '<span class="ic">' + cxSvg[ico] + "</span>" + (seul ? "" : "<small>" + $n(nom) + "</small>") + (badge ? '<b class="bd">' + badge + "</b>" : etat === "nodot" ? "" : '<i class="dot"></i>') + "</button>";
 }
 function cxEtat() {
   var el = ne("#etat");
