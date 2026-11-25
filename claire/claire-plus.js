@@ -28,6 +28,9 @@ id = function (n) {
   return t && t.tel ? cxTel(t.tel) : null;
 };
 
+/* consignes permanentes : langue par défaut darija → la conversation démarre en arabe (darija) */
+function cxDarija() { return !!(cxS && cxS.langue === "darija"); }
+
 async function cxSrv(op, data) {
   var code = Xe.get("cle", "");
   if (!code) return null;
@@ -38,7 +41,7 @@ async function cxSrv(op, data) {
     if (r.status === 429) { cxPause = Date.now() + 3600e3; if (j.erreur) St(j.erreur, 4e3); return null; }
     if (!r.ok) { if (j.erreur) St(j.erreur, 4e3); return null; }
     cxFaux = !1;
-    cxS = { appels: j.appels || [], contacts: j.contacts || [], google: j.google || "", wa: !!j.wa_key, tg: !!j.tg, tgBot: !!j.tg_bot };
+    cxS = { appels: j.appels || [], contacts: j.contacts || [], google: j.google || "", wa: !!j.wa_key, tg: !!j.tg, tgBot: !!j.tg_bot, pref: j.preferences || "aucune", langue: j.langue || "francais" };
     Xe.set("srv", cxS);
     if (j.msg) St(j.msg, 3e3);
     cxEtat(); cd();

@@ -80,6 +80,16 @@ h2{letter-spacing:.01em}
   <h2>📞 Derniers appels pris par Claire</h2>
   <div class="c" id="appels"></div>
 
+  <div id="consbox" hidden>
+  <h2>🗣️ Consignes de Claire</h2>
+  <p class="mut">Ce que Claire applique à chaque conversation. Dis-lui par exemple « parle-moi toujours en darija » ou « fais des réponses courtes ».</p>
+  <div class="c">
+    <div class="it"><div class="tx">Langue par défaut<span class="mut">Darija : Claire commence en darija et ne passe au français que si tu lui parles en français.</span></div></div>
+    <div class="btns" style="margin-top:8px"><button class="s" type="button" data-lg="francais" id="lgfr">Français</button><button class="s" type="button" data-lg="darija" id="lgdar">Darija</button></div>
+    <div id="consignes" style="margin-top:10px"></div>
+  </div>
+  </div>
+
   <h2>🧠 Ce que Claire a retenu</h2>
   <div class="c" id="memoire"></div>
   <p class="mut" style="text-align:center;margin-top:24px">Google relié : <span id="google">—</span></p>
@@ -121,6 +131,11 @@ function draw(j) {
   $('#contacts').innerHTML = cs.length ? cs.map(c => `<div class="it"><div class="tx"><b>${c.vip ? '<span class="vip">⭐</span> ' : ''}${esc(c.nom)}</b><span class="mut">${esc(c.tel)}${c.note ? ' · ' + esc(c.note) : ''}</span></div><button class="s" data-vip="${c.id}" data-v="${c.vip ? 0 : 1}">${c.vip ? 'Retirer VIP' : '⭐ VIP'}</button><button class="s" data-del="${c.id}" aria-label="Supprimer">✕</button></div>`).join('') : '<p class="mut" style="margin:0">Aucun contact pour le moment. Tu peux aussi dire à Claire : « enregistre Karim, 0470… ».</p>';
   const ap = j.appels || [];
   $('#appels').innerHTML = ap.length ? ap.map(a => `<div class="it"><div class="tx"><b class="${a.urgence === 'haute' ? 'urg' : ''}">${a.urgence === 'haute' ? '🚨 ' : ''}${esc(a.nom || 'Inconnu')}</b> <span class="mut" style="display:inline">${esc(a.tel)}</span><span class="mut">${esc(a.quand)} · ${esc(a.motif || '')}</span>${a.action ? `<span class="mut">✅ ${esc(a.action)}</span>` : ''}${a.wa_ok === false ? '<span class="mut urg">WhatsApp non envoyé</span>' : ''}</div></div>`).join('') : '<p class="mut" style="margin:0">Aucun appel pour le moment.</p>';
+  $('#consbox').hidden = !j.langue;
+  const lg = j.langue || 'francais';
+  $('#lgfr').style.cssText = lg === 'francais' ? 'background:linear-gradient(135deg,#45c8ff,#8a7dff);color:#fff' : ''; $('#lgdar').style.cssText = lg === 'darija' ? 'background:linear-gradient(135deg,#45c8ff,#8a7dff);color:#fff' : '';
+  const co = j.consignes || [];
+  $('#consignes').innerHTML = co.length ? co.map(c => `<div class="it"><div class="tx">${esc(c.texte)}</div><button class="s" data-cons="${Number(c.id)}" aria-label="Retirer">✕</button></div>`).join('') : '<p class="mut" style="margin:0">Aucune autre consigne pour l\'instant.</p>';
   const me = j.memoire || [];
   $('#memoire').innerHTML = me.length ? me.map(m => `<div class="it"><div class="tx">${esc(m.texte)}<span class="mut">${m.sujet ? esc(m.sujet) + ' · ' : ''}${esc(m.le)}</span></div><button class="s" data-mem="${m.id}" aria-label="Oublier">✕</button></div>`).join('') : '<p class="mut" style="margin:0">Rien pour l\'instant. Dis à Claire « retiens que… ».</p>';
 }
@@ -135,6 +150,8 @@ document.addEventListener('click', e => {
   if (b.dataset.vip) call('vip', { id: b.dataset.vip, v: b.dataset.v === '1' }, b);
   if (b.dataset.del && confirm('Supprimer ce contact ?')) call('del', { id: b.dataset.del }, b);
   if (b.dataset.mem && confirm('Effacer ce souvenir ?')) call('mem_del', { id: b.dataset.mem }, b);
+  if (b.dataset.cons && confirm('Retirer cette consigne ?')) call('consigne_retirer', { id: Number(b.dataset.cons) }, b);
+  if (b.dataset.lg) call('langue', { langue: b.dataset.lg }, b);
 });
 // téléphone verrouillé (appli Claire ouverte par-dessus l'écran de verrouillage) : les réglages restent fermés
 let verrou = false; try { verrou = !!(window.ClaireApp && window.ClaireApp.isLocked && window.ClaireApp.isLocked()); } catch (e) {}
