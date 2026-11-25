@@ -36,6 +36,14 @@ ol{padding-left:20px;margin:6px 0}a{color:#8fd8ff}
 #toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);background:#1d1830f2;border:1px solid #45c8ff55;padding:11px 18px;border-radius:22px;font-size:14px;font-weight:600;display:none;max-width:92%;text-align:center;z-index:9}
 .urg{color:#ff8f8f}
 #lock{text-align:center;padding:60px 10px}
+details.sec{margin:10px 0}details.sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:16px;background:#ffffff07;border:1px solid var(--line)}
+details.sec>summary::-webkit-details-marker{display:none}details.sec>summary h2{margin:0;font-size:16px}
+details.sec>summary::after{content:"›";font-size:22px;color:var(--mut);transform:rotate(90deg);transition:transform .2s}details.sec:not([open])>summary::after{transform:rotate(0)}
+details.sec[open]>summary{margin-bottom:4px}
+summary.mini{cursor:pointer;color:#8fd8ff;font-size:14px;margin-top:8px}
+label.sw{display:flex;gap:12px;align-items:flex-start;color:var(--txt);font-size:15px;margin:12px 0 4px}label.sw input{flex:none;margin:2px 0 0}
+select{width:100%;padding:12px;border-radius:12px;border:1px solid #ffffff22;background:#101a44;color:#fff;font:inherit}
+.prt{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;text-align:center;margin-bottom:6px}.prt div{background:#ffffff0a;border-radius:12px;padding:8px 2px}.prt b{display:block;font-size:15px}.prt small{color:var(--mut);font-size:11.5px}
 .back{display:inline-block;margin:0 0 10px;padding:8px 14px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--txt);text-decoration:none;font-weight:600;font-size:14px}
 .c{-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 h2{letter-spacing:.01em}
@@ -45,12 +53,73 @@ h2{letter-spacing:.01em}
 <div id="toast"></div>
 <a href="./" class="back">← Claire</a>
 <div class="top"><img src="icon-192.png" alt=""><h1>Réglages de <span>Claire</span></h1></div>
-<p class="mut">Page privée : ne partage pas ce lien.</p>
+<p class="mut">Page privée.</p>
 <div id="lock" hidden><p>🔒 Entre d'abord ton code personnel dans l'appli Claire (bouton 🔑).</p><p><a href="./">← Retour à Claire</a></p></div>
 <div id="app" hidden>
-  <h2>💬 Messages de Claire et briefing du matin</h2>
+  <details class="sec" open><summary><h2>✨ Pouvoirs de Claire</h2></summary>
+  <div id="plusbox" hidden>
+  <div class="c">
+    <div class="it"><div class="tx"><b>🔑 Clé ElevenLabs</b><span class="mut" id="elst">Pour comprendre tes vocaux Telegram, te répondre à voix haute, retenir tout seul ce qui compte, et protéger Claire (seule ton appli pourra lui parler).</span></div></div>
+    <details id="elform"><summary class="mini">Changer la clé</summary>
+    <ol class="mut" style="margin:6px 0 0;padding-left:20px">
+      <li>Ouvre <a href="https://elevenlabs.io/app/developers/api-keys" target="_blank" rel="noopener">elevenlabs.io → Developers → API Keys</a></li>
+      <li>« Create API key », nom : Claire. Laisse « Restrict Key » <b>désactivé</b> (Claire a besoin de la voix, de l'écoute et de l'agent).</li>
+      <li>Copie la clé (elle commence par sk_) et colle-la ici.</li>
+    </ol>
+    <input type="text" id="elkey" placeholder="sk_…" autocomplete="off" spellcheck="false" autocapitalize="off" style="margin-top:8px">
+    <div class="btns"><button id="saveEl">Enregistrer la clé</button><button class="s" id="delEl" hidden>Retirer</button></div>
+    </details>
+  </div>
+  <div class="c">
+    <label class="sw"><input type="checkbox" id="opt_alertes"><span>📅 Me prévenir sur Telegram 30 à 50 min avant chaque rendez-vous, avec l'itinéraire</span></label>
+    <label class="sw"><input type="checkbox" id="opt_memo"><span>🧠 Mémoire automatique : Claire retient seule ce qui compte à la fin de chaque conversation</span></label>
+    <label class="sw"><input type="checkbox" id="bv_on"><span>☀️ Briefing dit à voix haute au réveil</span></label>
+    <div class="row" style="margin-left:34px"><input type="time" id="bv_h" value="07:30" style="max-width:150px"></div>
+    <p class="mut" style="margin:6px 0 0 34px">Téléphone verrouillé : seulement la météo et le nombre de rendez-vous, rien de personnel.</p>
+  </div>
+  <div class="c">
+    <div id="mailbox"><div class="btns" style="margin-top:0"><button class="s" id="mailOk">✉️ Autoriser l'envoi d'e-mails</button></div>
+    <p class="mut" style="margin:6px 0 0">Relie Google une nouvelle fois et accepte « envoyer des e-mails ». Claire relit toujours l'e-mail et attend ton « oui » avant d'envoyer.</p></div>
+    <p class="mut" id="mailst" hidden style="margin:0">✅ <b>Envoi d'e-mails autorisé</b> : Claire relit toujours l'e-mail et attend ton « oui » avant d'envoyer.</p>
+    <div class="btns"><button class="s" id="saveNow">💾 Sauvegarder maintenant</button></div>
+    <p class="mut" style="margin:6px 0 0">Chaque dimanche à 20 h, Claire t'envoie aussi sur Telegram une sauvegarde de sa mémoire, de tes contacts et de tes consignes.</p>
+  </div>
+  <div class="c" id="telbox" hidden>
+    <div class="it"><div class="tx"><b>📱 Sur ce téléphone</b><span class="mut" id="telst"></span></div></div>
+    <div class="btns"><button class="s" id="notifOk">🔔 Autoriser la lecture des notifications</button><button class="s" id="lieuOk">📍 Autoriser la localisation</button></div>
+    <p class="mut" style="margin:6px 0 0">Widget : appui long sur l'écran d'accueil → Widgets → Claire.</p>
+  </div>
+  </div>
+  </details>
+
+  <details class="sec" id="consbox" hidden open><summary><h2>🗣️ Langue et consignes</h2></summary>
+  <div class="c">
+    <div class="it"><div class="tx"><b>Langue par défaut</b><span class="mut">Darija : Claire commence en darija et ne passe au français que si tu lui parles en français.</span></div></div>
+    <div class="btns" style="margin-top:8px"><button class="s" type="button" data-lg="francais" id="lgfr">Français</button><button class="s" type="button" data-lg="darija" id="lgdar">Darija</button></div>
+    <div id="consignes" style="margin-top:10px"></div>
+    <p class="mut" style="margin:8px 0 0">Pour ajouter une consigne, dis-la à Claire : « fais des réponses courtes », « appelle-moi chef »…</p>
+  </div>
+  </details>
+
+  <details class="sec" id="prbox" hidden><summary><h2>🕌 Prière</h2></summary>
+  <div class="c">
+    <div id="prtimes" class="prt"></div>
+    <label class="sw"><input type="checkbox" id="pr_on"><span>Rappel sur Telegram avant chaque prière</span></label>
+    <label class="sw"><input type="checkbox" id="pr_voix"><span>Claire le dit à voix haute sur le téléphone</span></label>
+    <label>Combien de minutes avant ?</label>
+    <select id="pr_avant"><option value="0">À l'heure exacte</option><option value="5">5 min avant</option><option value="10">10 min avant</option><option value="15">15 min avant</option><option value="20">20 min avant</option><option value="30">30 min avant</option></select>
+    <label>Méthode de calcul</label>
+    <select id="pr_meth"><option value="mwl">Ligue islamique mondiale</option><option value="maroc">Maroc (ministère des Habous)</option><option value="france">France (UOIF)</option><option value="egypte">Égypte</option><option value="isna">Amérique du Nord (ISNA)</option><option value="makkah">Umm Al-Qura (La Mecque)</option><option value="turquie">Turquie (Diyanet)</option></select>
+  </div>
+  </details>
+
+  <details class="sec"><summary><h2>💬 Telegram et briefing écrit</h2></summary>
   <div class="c" id="tgst" hidden></div>
   <div class="c">
+    <label class="sw"><input type="checkbox" id="briefing_on"><span>Briefing écrit chaque matin (Telegram) à</span></label>
+    <div class="row" style="margin-left:34px"><input type="time" id="briefing_heure" style="max-width:150px"></div>
+    <div class="btns"><button id="saveWa">Enregistrer</button><button class="s" id="briefNow">📨 Recevoir le briefing maintenant</button></div>
+    <details id="wabox" style="margin-top:12px"><summary class="mini">WhatsApp (facultatif, si Telegram n'est pas relié)</summary>
     <p class="mut" style="margin:0 0 4px">Pour que Claire t'écrive sur WhatsApp (gratuit, une seule fois) :</p>
     <ol class="mut">
       <li>Ouvre <a href="https://www.callmebot.com/blog/free-api-whatsapp-messages/" target="_blank" rel="noopener">callmebot.com</a> et ajoute dans tes contacts le numéro WhatsApp indiqué sur la page.</li>
@@ -59,71 +128,33 @@ h2{letter-spacing:.01em}
     </ol>
     <label>Ton numéro WhatsApp</label><input type="tel" id="wa_phone" placeholder="0470 12 34 56">
     <label>APIKEY reçue de CallMeBot</label><input type="text" id="wa_key" placeholder="123456" autocomplete="off">
-    <label><input type="checkbox" id="briefing_on">Briefing du matin sur WhatsApp, chaque jour à</label><input type="time" id="briefing_heure">
-    <div class="btns"><button id="saveWa">Enregistrer</button><button class="s" id="testWa">Enregistrer + tester</button></div>
-    <div class="btns"><button class="s" id="briefNow">📨 Recevoir le briefing maintenant</button></div>
+    <div class="btns"><button class="s" id="testWa">Enregistrer + tester WhatsApp</button></div>
+    </details>
   </div>
+  </details>
 
-  <h2>📅 Heures où Claire peut fixer des rendez-vous</h2>
-  <div class="c"><div id="days"></div><div class="btns"><button id="saveH">Enregistrer les horaires</button></div></div>
+  <details class="sec"><summary><h2>📅 Heures de rendez-vous</h2></summary>
+  <div class="c"><p class="mut" style="margin:0 0 6px">Quand quelqu'un appelle, Claire ne propose des rendez-vous que dans ces plages.</p><div id="days"></div><div class="btns"><button id="saveH">Enregistrer les horaires</button></div></div>
+  </details>
 
-  <h2>⭐ Contacts</h2>
+  <details class="sec"><summary><h2>⭐ Contacts</h2></summary>
   <div class="c">
     <p class="mut" style="margin:0">⭐ VIP : quand cette personne appelle, Claire te passe l'appel directement.</p>
     <div class="row" style="margin-top:10px"><input type="text" id="nom" placeholder="Nom"><input type="tel" id="tel" placeholder="Téléphone"></div>
     <input type="text" id="note" placeholder="Qui c'est ? (client, ma sœur…)" style="margin-top:8px">
-    <label><input type="checkbox" id="vip">VIP</label>
+    <label class="sw"><input type="checkbox" id="vip"><span>VIP</span></label>
     <div class="btns"><button id="addC">Ajouter le contact</button></div>
   </div>
   <div class="c" id="contacts"></div>
+  </details>
 
-  <h2>📞 Derniers appels pris par Claire</h2>
+  <details class="sec"><summary><h2>📞 Derniers appels pris par Claire</h2></summary>
   <div class="c" id="appels"></div>
+  </details>
 
-  <div id="consbox" hidden>
-  <h2>🗣️ Consignes de Claire</h2>
-  <p class="mut">Ce que Claire applique à chaque conversation. Dis-lui par exemple « parle-moi toujours en darija » ou « fais des réponses courtes ».</p>
-  <div class="c">
-    <div class="it"><div class="tx">Langue par défaut<span class="mut">Darija : Claire commence en darija et ne passe au français que si tu lui parles en français.</span></div></div>
-    <div class="btns" style="margin-top:8px"><button class="s" type="button" data-lg="francais" id="lgfr">Français</button><button class="s" type="button" data-lg="darija" id="lgdar">Darija</button></div>
-    <div id="consignes" style="margin-top:10px"></div>
-  </div>
-  </div>
-
-  <div id="plusbox" hidden>
-  <h2>✨ Pouvoirs de Claire</h2>
-  <div class="c">
-    <div class="it"><div class="tx"><b>🔑 Clé ElevenLabs</b><span class="mut" id="elst">Pour comprendre tes vocaux Telegram, te répondre à voix haute, retenir tout seul ce qui compte, et protéger Claire (seule ton appli pourra lui parler).</span></div></div>
-    <ol class="mut" style="margin:6px 0 0;padding-left:20px">
-      <li>Ouvre <a href="https://elevenlabs.io/app/developers/api-keys" target="_blank" rel="noopener">elevenlabs.io → Developers → API Keys</a></li>
-      <li>« Create API key », nom : Claire. Laisse « Restrict Key » <b>désactivé</b> (Claire a besoin de la voix, de l'écoute et de l'agent).</li>
-      <li>Copie la clé (elle commence par sk_) et colle-la ici.</li>
-    </ol>
-    <input type="text" id="elkey" placeholder="sk_…" autocomplete="off" spellcheck="false" autocapitalize="off" style="margin-top:8px">
-    <div class="btns"><button id="saveEl">Enregistrer la clé</button><button class="s" id="delEl" hidden>Retirer</button></div>
-  </div>
-  <div class="c">
-    <label><input type="checkbox" id="opt_alertes">📅 Me prévenir sur Telegram 30 à 50 min avant chaque rendez-vous (avec l'itinéraire)</label>
-    <label><input type="checkbox" id="opt_memo">🧠 Mémoire automatique : Claire retient seule ce qui compte à la fin de chaque conversation</label>
-    <label><input type="checkbox" id="bv_on">☀️ Briefing dit à voix haute au réveil, chaque jour à</label><input type="time" id="bv_h" value="07:30">
-    <p class="mut" style="margin:4px 0 0">Téléphone verrouillé : Claire dit seulement la météo et le nombre de rendez-vous, rien de personnel.</p>
-  </div>
-  <div class="c">
-    <div id="mailbox"><div class="btns" style="margin-top:0"><button class="s" id="mailOk">✉️ Autoriser l'envoi d'e-mails</button></div>
-    <p class="mut" style="margin:6px 0 0">Relie Google une nouvelle fois et accepte « envoyer des e-mails ». Claire relit toujours l'e-mail et attend ton « oui » avant d'envoyer.</p></div>
-    <p class="mut" id="mailst" hidden style="margin:0">✅ <b>Envoi d'e-mails autorisé</b> : Claire relit toujours l'e-mail et attend ton « oui » avant d'envoyer.</p>
-    <div class="btns"><button class="s" id="saveNow">💾 Sauvegarder maintenant</button></div>
-    <p class="mut" style="margin:6px 0 0">Chaque dimanche à 20 h, Claire t'envoie aussi sur Telegram une sauvegarde de sa mémoire, tes contacts et tes consignes.</p>
-  </div>
-  <div class="c" id="telbox" hidden>
-    <div class="it"><div class="tx"><b>📱 Sur ce téléphone</b><span class="mut" id="telst"></span></div></div>
-    <div class="btns"><button class="s" id="notifOk">🔔 Autoriser la lecture des notifications</button><button class="s" id="lieuOk">📍 Autoriser la localisation</button></div>
-    <p class="mut" style="margin:6px 0 0">Widget : appuie longtemps sur l'écran d'accueil → Widgets → Claire.</p>
-  </div>
-  </div>
-
-  <h2>🧠 Ce que Claire a retenu</h2>
+  <details class="sec"><summary><h2>🧠 Ce que Claire a retenu</h2></summary>
   <div class="c" id="memoire"></div>
+  </details>
   <p class="mut" style="text-align:center;margin-top:24px">Google relié : <span id="google">—</span></p>
 </div>
 <script>
@@ -137,6 +168,8 @@ try { const h = new URLSearchParams(location.hash.slice(1)).get('l'); if (h) { l
 // sans lien personnel : le code personnel entré dans l'appli Claire suffit
 try { CODE = JSON.parse(localStorage.getItem('claire_cle') || '""') || ''; } catch (e) {}
 const API2 = 'https://vmhznuivhwwfphmypsic.supabase.co/functions/v1/claire-plus/web/reglages';
+const telVu = t => { t = String(t || '').replace(/[^\d+]/g, ''); if (t.startsWith('+32')) t = '0' + t.slice(3); return t.replace(/^(04\d\d)(\d\d)(\d\d)(\d\d)$/, '$1 $2 $3 $4').replace(/^(0[2-9])(\d{3})(\d\d)(\d\d)$/, '$1 $2 $3 $4'); };
+const rien = a => !a || /^(rien|aucune?|non|-)\.?$/i.test(String(a).trim());
 function toast(t, ms = 2800) { const e = $('#toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(e._t); e._t = setTimeout(() => e.style.display = 'none', ms); }
 async function call(op, data = {}, btn) {
   if (btn) btn.disabled = true;
@@ -160,9 +193,9 @@ function draw(j) {
   const H = j.horaires || {};
   $('#days').innerHTML = JOURS.map(([d, n]) => `<div class="day"><label style="margin:0;color:var(--txt)"><input type="checkbox" data-d="${d}" ${H[d] ? 'checked' : ''}>${n}</label><input type="number" min="0" max="23" data-a="${d}" value="${H[d]?.[0] ?? 9}"><span>→</span><input type="number" min="1" max="24" data-b="${d}" value="${H[d]?.[1] ?? 18}"></div>`).join('');
   const cs = j.contacts || [];
-  $('#contacts').innerHTML = cs.length ? cs.map(c => `<div class="it"><div class="tx"><b>${c.vip ? '<span class="vip">⭐</span> ' : ''}${esc(c.nom)}</b><span class="mut">${esc(c.tel)}${c.note ? ' · ' + esc(c.note) : ''}</span></div><button class="s" data-vip="${c.id}" data-v="${c.vip ? 0 : 1}">${c.vip ? 'Retirer VIP' : '⭐ VIP'}</button><button class="s" data-del="${c.id}" aria-label="Supprimer">✕</button></div>`).join('') : '<p class="mut" style="margin:0">Aucun contact pour le moment. Tu peux aussi dire à Claire : « enregistre Karim, 0470… ».</p>';
+  $('#contacts').innerHTML = cs.length ? cs.map(c => `<div class="it"><div class="tx"><b>${c.vip ? '<span class="vip">⭐</span> ' : ''}${esc(c.nom)}</b><span class="mut">${esc(telVu(c.tel))}${c.note ? ' · ' + esc(c.note) : ''}</span></div><button class="s" data-vip="${c.id}" data-v="${c.vip ? 0 : 1}">${c.vip ? 'Retirer VIP' : '⭐ VIP'}</button><button class="s" data-del="${c.id}" aria-label="Supprimer">✕</button></div>`).join('') : '<p class="mut" style="margin:0">Aucun contact pour le moment. Tu peux aussi dire à Claire : « enregistre Karim, 0470… ».</p>';
   const ap = j.appels || [];
-  $('#appels').innerHTML = ap.length ? ap.map(a => `<div class="it"><div class="tx"><b class="${a.urgence === 'haute' ? 'urg' : ''}">${a.urgence === 'haute' ? '🚨 ' : ''}${esc(a.nom || 'Inconnu')}</b> <span class="mut" style="display:inline">${esc(a.tel)}</span><span class="mut">${esc(a.quand)} · ${esc(a.motif || '')}</span>${a.action ? `<span class="mut">✅ ${esc(a.action)}</span>` : ''}${a.wa_ok === false ? '<span class="mut urg">WhatsApp non envoyé</span>' : ''}</div></div>`).join('') : '<p class="mut" style="margin:0">Aucun appel pour le moment.</p>';
+  $('#appels').innerHTML = ap.length ? ap.map(a => `<div class="it"><div class="tx"><b class="${a.urgence === 'haute' ? 'urg' : ''}">${a.urgence === 'haute' ? '🚨 ' : ''}${esc(a.nom || 'Inconnu')}</b> <span class="mut" style="display:inline">${esc(telVu(a.tel))}</span><span class="mut">${esc(a.quand)} · ${esc(a.motif || '')}</span>${!rien(a.action) ? `<span class="mut">✅ ${esc(a.action)}</span>` : ''}${a.wa_ok === false ? '<span class="mut urg">WhatsApp non envoyé</span>' : ''}</div></div>`).join('') : '<p class="mut" style="margin:0">Aucun appel pour le moment.</p>';
   $('#consbox').hidden = !j.langue;
   drawPlus(j);
   const lg = j.langue || 'francais';
@@ -170,7 +203,7 @@ function draw(j) {
   const co = j.consignes || [];
   $('#consignes').innerHTML = co.length ? co.map(c => `<div class="it"><div class="tx">${esc(c.texte)}</div><button class="s" data-cons="${Number(c.id)}" aria-label="Retirer">✕</button></div>`).join('') : '<p class="mut" style="margin:0">Aucune autre consigne pour l\'instant.</p>';
   const me = j.memoire || [];
-  $('#memoire').innerHTML = me.length ? me.map(m => `<div class="it"><div class="tx">${esc(m.texte)}<span class="mut">${m.sujet ? esc(m.sujet) + ' · ' : ''}${esc(m.le)}</span></div><button class="s" data-mem="${m.id}" aria-label="Oublier">✕</button></div>`).join('') : '<p class="mut" style="margin:0">Rien pour l\'instant. Dis à Claire « retiens que… ».</p>';
+  $('#memoire').innerHTML = me.length ? me.map(m => `<div class="it"><div class="tx">${esc(m.texte)}<span class="mut">${m.sujet === 'auto' ? '🤖 retenu seul · ' : m.sujet ? esc(m.sujet) + ' · ' : ''}${esc(m.le)}</span></div><button class="s" data-mem="${m.id}" aria-label="Oublier">✕</button></div>`).join('') : '<p class="mut" style="margin:0">Rien pour l\'instant. Dis à Claire « retiens que… ».</p>';
 }
 // pouvoirs de Claire : toujours avec le code personnel (serveur claire-plus)
 async function plus(op, data = {}, btn) {
@@ -191,6 +224,7 @@ function drawPlus(j) {
   $('#plusbox').hidden = false;
   $('#elst').innerHTML = j.el ? '✅ <b>Clé enregistrée</b> : vocaux Telegram, réponses à voix haute, mémoire automatique et protection actifs.' : 'Pour comprendre tes vocaux Telegram, te répondre à voix haute, retenir tout seul ce qui compte, et protéger Claire (seule ton appli pourra lui parler).';
   $('#delEl').hidden = !j.el;
+  if (!drawPlus.fait) { drawPlus.fait = 1; $('#elform').open = !j.el; $('#elform').querySelector('summary').textContent = j.el ? 'Changer la clé' : 'Ajouter la clé'; prGet(); }
   $('#opt_alertes').checked = !!j.alertes; $('#opt_memo').checked = !!j.memoire_auto;
   $('#mailbox').hidden = !!j.mail; $('#mailst').hidden = !j.mail;
 }
@@ -200,6 +234,27 @@ $('#opt_alertes').onchange = e => plus('opt', { alertes: e.target.checked });
 $('#opt_memo').onchange = e => plus('opt', { memoire_auto: e.target.checked });
 $('#saveNow').onclick = e => plus('sauvegarde', {}, e.target);
 $('#mailOk').onclick = async e => { const j = await plus('google_lien', {}, e.target); if (j && j.url) location.href = j.url; };
+// prière : horaires du jour et réglages
+const PRN = { Fajr: 'Sobh', Dhuhr: 'Dohr', Asr: 'Asr', Maghrib: 'Maghrib', Isha: 'Icha' };
+async function prOp(data = {}) {
+  try {
+    const r = await fetch(API2, { method: 'POST', headers: { 'content-type': 'application/json', 'x-claire-app': CODE }, body: JSON.stringify({ op: 'priere', ...data }) });
+    const j = await r.json(); if (!r.ok || j.erreur) { if (j.erreur) toast('⚠️ ' + j.erreur); return null; }
+    $('#prbox').hidden = false;
+    const t = j.horaires_aujourdhui_bruxelles;
+    $('#prtimes').innerHTML = t && typeof t === 'object' ? Object.keys(PRN).map(k => `<div><small>${PRN[k]}</small><b>${esc(t[k] || '—')}</b></div>`).join('') : '';
+    $('#pr_on').checked = !!j.rappel_actif; $('#pr_voix').checked = /^oui/.test(String(j.annonce_vocale));
+    $('#pr_avant').value = String(j.minutes_avant ?? 10);
+    const m = Object.entries(j.methodes_possibles || {}).find(([, v]) => v === j.methode); if (m) $('#pr_meth').value = m[0];
+    return j;
+  } catch (e) { return null; }
+}
+const prGet = () => CODE && prOp();
+const prSet = (d, msg) => prOp(d).then(j => j && toast(msg));
+$('#pr_on').onchange = e => prSet({ actif: e.target.checked }, e.target.checked ? '🕌 Rappels de prière activés' : 'Rappels de prière coupés');
+$('#pr_voix').onchange = e => prSet({ voix: e.target.checked }, e.target.checked ? '🔊 Annonce à voix haute activée (ouvre l\'appli Claire pour la programmer)' : 'Annonce à voix haute coupée');
+$('#pr_avant').onchange = e => prSet({ minutes_avant: Number(e.target.value) }, '✅ Enregistré');
+$('#pr_meth').onchange = e => prSet({ methode: e.target.value }, '✅ Méthode changée');
 const BV = () => { try { return JSON.parse(localStorage.getItem('claire_brief_voix') || '{}') || {}; } catch (e) { return {}; } };
 $('#bv_on').checked = !!BV().on; $('#bv_h').value = BV().h || '07:30';
 const saveBV = () => { try { localStorage.setItem('claire_brief_voix', JSON.stringify({ on: $('#bv_on').checked, h: $('#bv_h').value || '07:30' })); } catch (e) {} toast($('#bv_on').checked ? '☀️ Briefing à voix haute chaque jour à ' + ($('#bv_h').value || '07:30') + (window.ClaireApp ? '' : ' (dans l\'appli Android)') : 'Briefing à voix haute coupé'); };
