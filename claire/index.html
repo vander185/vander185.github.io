@@ -29,7 +29,19 @@ header{display:flex;align-items:center;justify-content:space-between;padding:12p
 .brand .lg{width:36px;height:36px;border-radius:10px;box-shadow:0 4px 14px #45c8ff40}
 .hr{display:flex;align-items:center;gap:8px}
 #reg{width:38px;height:38px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;text-decoration:none;font-size:16px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
-#etat{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}#etat:empty{display:none}
+#etat{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px}#etat:empty{display:none}
+.ico{display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:0;padding:0;color:var(--txt);cursor:pointer;font:inherit;min-width:48px}
+.ico .ic{position:relative;width:46px;height:46px;border-radius:15px;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);color:#cfe7ff;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:transform .15s}
+.ico:active .ic{transform:scale(.92)}
+.ico svg{width:22px;height:22px}
+.ico small{font-size:11px;font-weight:600;color:var(--mut);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ico .dot{position:absolute;top:-3px;right:-3px;width:12px;height:12px;border-radius:50%;border:2px solid var(--bg);background:#8b96c4}
+.ico.ok .dot{background:#3ddc84}.ico.set .dot{background:var(--p)}
+.ico.warn .ic{border-color:#ffc78f88;color:#ffd9a8}.ico.warn .dot{background:#ffa53d;animation:cxpulse 1.6s infinite}
+.ico.hot .ic{background:#ff5d7a33;border-color:#ff5d7a;color:#fff}
+.ico .bd{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#ff3b5c;color:#fff;font:800 11px/18px inherit;border:2px solid var(--bg)}
+@keyframes cxpulse{50%{box-shadow:0 0 0 5px #ffa53d33}}
+
 .pill{border:1px solid var(--line);background:var(--card);color:#d7d1ea;border-radius:99px;padding:4px 10px;font:600 11.5px/1.2 inherit;white-space:nowrap}
 .pill.ok{color:#9be8c1;border-color:#9be8c133}.pill.ok:before{content:'● ';color:#5fd39a}
 .pill.warn{color:#ffd9a8;border-color:#ffc78f55;cursor:pointer}

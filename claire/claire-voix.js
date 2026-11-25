@@ -14,7 +14,7 @@ var cxEtatV = cxEtat;
 cxEtat = function () {
   cxEtatV();
   var el = ne("#etat");
-  if (el) el.insertAdjacentHTML("beforeend", '<button data-go="voix" class="pill">🗣️ Voix : ' + cxVoixCur().p + "</button>");
+  if (el) el.insertAdjacentHTML("beforeend", cxIco("voix", "voix", cxVoixCur().p, "ok", "Voix : " + cxVoixCur().p));
 };
 ne("#etat").addEventListener("click", function (e) {
   var b = e.target.closest('[data-go="voix"]');

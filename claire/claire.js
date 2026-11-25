@@ -478,16 +478,30 @@ function cxRefresh() {
 }
 
 /* petites pastilles d'état sous la date */
+var cxSvg = {
+  google: '<svg viewBox="0 0 24 24"><text x="12" y="17" text-anchor="middle" font-size="18" font-weight="800" font-family="Arial,sans-serif" fill="currentColor">G</text></svg>',
+  tg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 4 3 11l6 2 2 6 3-4 5 4z"/><path d="m9 13 8-6"/></svg>',
+  wa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/></svg>',
+  key: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9m-3 3 3 3m-5-1 2 2"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  voix: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></svg>',
+  urg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>'
+};
+/** bouton-icône d'état : vert = OK, orange = à faire, rouge = urgent */
+function cxIco(go, ico, nom, etat, info, badge) {
+  return '<button data-go="' + go + '" data-info="' + $n(info || "") + '" class="ico ' + (etat || "") + '" aria-label="' + $n(nom + " : " + (info || "")) + '">' +
+    '<span class="ic">' + cxSvg[ico] + (badge ? '<b class="bd">' + badge + "</b>" : '<i class="dot"></i>') + "</span><small>" + $n(nom) + "</small></button>";
+}
 function cxEtat() {
   var el = ne("#etat");
   if (!el) return;
   var code = !!Xe.get("cle", ""), p = [];
-  if (!code) p.push('<button data-go="key" class="pill warn">🔑 Entrer mon code</button>');
+  if (!code) p.push(cxIco("key", "key", "Code", "warn", "Touche pour entrer ton code personnel"));
   else {
-    p.push(cxS.google ? '<span class="pill ok">Google relié</span>' : '<button data-go="reg" class="pill warn">Google à relier</button>');
-    p.push(cxS.tg ? '<span class="pill ok">Telegram relié</span>' : cxS.wa ? '<span class="pill ok">WhatsApp relié</span>' : cxS.tgBot ? '<button data-go="tg" class="pill warn">Telegram : envoie ton code</button>' : '<button data-go="reg" class="pill warn">Messages à relier</button>');
+    p.push(cxS.google ? cxIco("info", "google", "Google", "ok", "Google relié : agenda et e-mails accessibles") : cxIco("reg", "google", "Google", "warn", "Google à relier : touche pour ouvrir les réglages"));
+    p.push(cxS.tg ? cxIco("info", "tg", "Telegram", "ok", "Telegram relié : tu reçois tes messages de Claire") : cxS.wa ? cxIco("info", "wa", "WhatsApp", "ok", "WhatsApp relié") : cxS.tgBot ? cxIco("tg", "tg", "Telegram", "warn", "Telegram : envoie ton code à ton robot") : cxIco("reg", "tg", "Messages", "warn", "Messages à relier : touche pour ouvrir les réglages"));
     var n = (cxS.appels || []).filter(function (a) { return a.urgence === "haute"; }).length;
-    if (n) p.push('<button data-go="appels" class="pill hot">🚨 ' + n + " appel" + (n > 1 ? "s" : "") + " urgent" + (n > 1 ? "s" : "") + "</button>");
+    if (n) p.push(cxIco("appels", "urg", "Urgent", "hot", n + " appel" + (n > 1 ? "s" : "") + " urgent" + (n > 1 ? "s" : ""), n));
   }
   el.innerHTML = p.join("");
 }
@@ -497,6 +511,7 @@ ne("#etat").addEventListener("click", function (e) {
   if (b.dataset.go === "key") ne("#key").click();
   else if (b.dataset.go === "reg") location.href = "reglages.html";
   else if (b.dataset.go === "tg") St("Dans Telegram, ouvre ton robot Claire et envoie-lui ton code personnel. Ensuite rouvre l'appli.", 7e3);
+  else if (b.dataset.go === "info") St(b.dataset.info, 3500);
   else { Qn = "appels"; cd(); ne(".panel").scrollIntoView({ behavior: "smooth" }); }
 });
 
@@ -624,7 +639,7 @@ var cxEtatBase = cxEtat;
 cxEtat = function () {
   cxEtatBase();
   var el = ne("#etat");
-  if (el) el.insertAdjacentHTML("beforeend", '<button data-go="micro" class="pill">🎙️ Micro : ' + cxMicNiv[cxMic].n + "</button>");
+  if (el) el.insertAdjacentHTML("beforeend", cxIco("micro", "mic", "Micro", cxMic === 2 ? "ok" : "set", "Sensibilité : " + cxMicNiv[cxMic].n));
 };
 ne("#etat").addEventListener("click", function (e) {
   var b = e.target.closest('[data-go="micro"]');
@@ -705,7 +720,7 @@ var cxEtatV = cxEtat;
 cxEtat = function () {
   cxEtatV();
   var el = ne("#etat");
-  if (el) el.insertAdjacentHTML("beforeend", '<button data-go="voix" class="pill">🗣️ Voix : ' + cxVoixCur().p + "</button>");
+  if (el) el.insertAdjacentHTML("beforeend", cxIco("voix", "voix", cxVoixCur().p, "ok", "Voix : " + cxVoixCur().p));
 };
 ne("#etat").addEventListener("click", function (e) {
   var b = e.target.closest('[data-go="voix"]');
