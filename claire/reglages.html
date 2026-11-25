@@ -105,7 +105,7 @@ async function call(op, data = {}, btn) {
     if (r.status === 403 || r.status === 429) { $('#app').hidden = true; $('#lock').hidden = false; if (L) try { localStorage.removeItem('claire_reglages'); } catch (e) {} if (j.erreur) toast(j.erreur, 5000); return; }
     if (j.msg) toast(j.msg, j.msg.startsWith('⚠️') ? 6000 : 2800);
     draw(j);
-  } catch (e) { toast('⚠️ Pas de connexion, réessaie.'); }
+  } catch (e) { toast('⚠️ Pas de connexion, réessaie.'); if (op === 'get' && $('#app').hidden) { $('#lock').innerHTML = '<p>📡 Pas de connexion pour l’instant.</p><p><button id="retry" class="s" type="button">Réessayer</button></p><p><a href="./">← Retour à Claire</a></p>'; $('#lock').hidden = false; $('#retry').onclick = () => { $('#lock').hidden = true; call('get'); }; } }
   finally { if (btn) btn.disabled = false; }
 }
 function draw(j) {
@@ -136,7 +136,10 @@ document.addEventListener('click', e => {
   if (b.dataset.del && confirm('Supprimer ce contact ?')) call('del', { id: b.dataset.del }, b);
   if (b.dataset.mem && confirm('Effacer ce souvenir ?')) call('mem_del', { id: b.dataset.mem }, b);
 });
-if (L || CODE) call('get'); else $('#lock').hidden = false;
+// téléphone verrouillé (appli Claire ouverte par-dessus l'écran de verrouillage) : les réglages restent fermés
+let verrou = false; try { verrou = !!(window.ClaireApp && window.ClaireApp.isLocked && window.ClaireApp.isLocked()); } catch (e) {}
+if (verrou) { $('#lock').innerHTML = '<p>🔒 Déverrouille ton téléphone pour ouvrir les réglages de Claire.</p><p><a href="./">← Retour à Claire</a></p>'; $('#lock').hidden = false; }
+else if (L || CODE) call('get'); else $('#lock').hidden = false;
 </script>
 </body>
 </html>
