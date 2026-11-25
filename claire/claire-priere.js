@@ -29,19 +29,48 @@ function cxAnnonceFin() {
   cxAnnonce = null; cxAnnT = 0;
   setTimeout(function () { rk(); setTimeout(function () { try { window.ClaireApp && window.ClaireApp.done(); } catch (e) {} }, 600); }, 400);
 }
+var cxAnnAttente = 0;
 function cxModeAnnonce(m) {
   if (!cxAnnonce) return;
+  clearTimeout(cxAnnAttente);
   if (m === "speaking") cxAnnT = 1;
-  else if (cxAnnT === 1) cxAnnonceFin();   // elle a fini de parler : on raccroche
+  else if (cxAnnT === 1) cxAnnAttente = setTimeout(cxAnnonceFin, 1800);   // elle a fini de parler (petite marge si le son arrive par morceaux) : on raccroche
 }
-window.claireAnnonce = function (t, lock) {
+/* briefing du matin dit à voix haute, chaque jour à l'heure choisie dans les réglages */
+var cxBriefTxt = "☀️ Briefing du matin";
+function cxBriefProg() {
+  var A = window.ClaireApp; if (!A || !A.prayer) return;
+  var o = {}; try { o = JSON.parse(localStorage.getItem("claire_brief_voix") || "{}") || {}; } catch (e) {}
+  (Xe.get("brief_ids", []) || []).forEach(function (id) { try { A.cancelPrayer(id); } catch (e) {} });
+  var ids = [];
+  if (o.on && Xe.get("cle", "")) {
+    var hm = String(o.h || "07:30").split(":").map(Number);
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(); d.setDate(d.getDate() + i); d.setHours(hm[0] || 7, hm[1] || 0, 0, 0);
+      if (d.getTime() < Date.now() + 30000) continue;
+      var id = "b" + d.toISOString().slice(0, 10);
+      try { A.prayer(id, d.getTime(), cxBriefTxt); ids.push(id); } catch (e) {}
+    }
+  }
+  Xe.set("brief_ids", ids);
+}
+window.claireAnnonce = async function (t, lock) {
   t = String(t || ""); if (!t) return;
-  if (fe || Bi) { St("🕌 " + t, 8000); return; }   // déjà en conversation : juste un message à l'écran
-  Ms(!!lock); cxAnnonce = t; cxAnnT = 0; St("🕌 " + t, 8000); Vi();
-  setTimeout(function () { if (cxAnnonce) cxAnnonceFin(); }, 40000);   // sécurité
+  var brief = t.indexOf("☀") === 0, ic = brief ? "" : "🕌 ";
+  if (fe || Bi) { St(ic + t, 8000); return; }   // déjà en conversation : juste un message à l'écran
+  Ms(!!lock);
+  if (brief) {   // téléphone verrouillé : version courte, sans rien de personnel
+    St("☀️ Bonjour Ahmed !", 4000);
+    var j = await cxOp("briefing_texte", { court: !!lock });
+    t = (j && j.texte) || "Bonjour Ahmed ! Je n'arrive pas à préparer ton briefing pour l'instant. Bonne journée !";
+    if (fe || Bi) return;
+  }
+  cxAnnonce = t; cxAnnT = 0; St(ic + t, brief ? 15000 : 8000); Vi();
+  setTimeout(function () { if (cxAnnonce) cxAnnonceFin(); }, brief ? 150000 : 40000);   // sécurité
 };
 (function () {
   var m = location.search.match(/[?&]annonce=([^&]*)/);
   if (m) { var t = decodeURIComponent(m[1].replace(/\+/g, " ")), l = /[?&]lock=1/.test(location.search); history.replaceState(null, "", location.pathname); setTimeout(function () { window.claireAnnonce(t, l); }, 900); }
 })();
 setTimeout(cxPrieresProg, 3000); setInterval(cxPrieresProg, 3 * 3600e3);
+setTimeout(cxBriefProg, 3500); setInterval(cxBriefProg, 6 * 3600e3);

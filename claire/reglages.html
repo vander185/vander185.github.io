@@ -90,6 +90,37 @@ h2{letter-spacing:.01em}
   </div>
   </div>
 
+  <div id="plusbox" hidden>
+  <h2>✨ Pouvoirs de Claire</h2>
+  <div class="c">
+    <div class="it"><div class="tx"><b>🔑 Clé ElevenLabs</b><span class="mut" id="elst">Pour comprendre tes vocaux Telegram, te répondre à voix haute, retenir tout seul ce qui compte, et protéger Claire (seule ton appli pourra lui parler).</span></div></div>
+    <ol class="mut" style="margin:6px 0 0;padding-left:20px">
+      <li>Ouvre <a href="https://elevenlabs.io/app/developers/api-keys" target="_blank" rel="noopener">elevenlabs.io → Developers → API Keys</a></li>
+      <li>« Create API key », nom : Claire. Coche au moins : Text to Speech, Speech to Text, ElevenLabs Agents (écriture).</li>
+      <li>Copie la clé (elle commence par sk_) et colle-la ici.</li>
+    </ol>
+    <input type="text" id="elkey" placeholder="sk_…" autocomplete="off" spellcheck="false" autocapitalize="off" style="margin-top:8px">
+    <div class="btns"><button id="saveEl">Enregistrer la clé</button><button class="s" id="delEl" hidden>Retirer</button></div>
+  </div>
+  <div class="c">
+    <label><input type="checkbox" id="opt_alertes">📅 Me prévenir sur Telegram 30 à 50 min avant chaque rendez-vous (avec l'itinéraire)</label>
+    <label><input type="checkbox" id="opt_memo">🧠 Mémoire automatique : Claire retient seule ce qui compte à la fin de chaque conversation</label>
+    <label><input type="checkbox" id="bv_on">☀️ Briefing dit à voix haute au réveil, chaque jour à</label><input type="time" id="bv_h" value="07:30">
+    <p class="mut" style="margin:4px 0 0">Téléphone verrouillé : Claire dit seulement la météo et le nombre de rendez-vous, rien de personnel.</p>
+  </div>
+  <div class="c">
+    <div class="btns" style="margin-top:0"><button class="s" id="mailOk">✉️ Autoriser l'envoi d'e-mails</button></div>
+    <p class="mut" style="margin:6px 0 0">Relie Google une nouvelle fois et accepte « envoyer des e-mails ». Claire relit toujours l'e-mail et attend ton « oui » avant d'envoyer.</p>
+    <div class="btns"><button class="s" id="saveNow">💾 Sauvegarder maintenant</button></div>
+    <p class="mut" style="margin:6px 0 0">Chaque dimanche à 20 h, Claire t'envoie aussi sur Telegram une sauvegarde de sa mémoire, tes contacts et tes consignes.</p>
+  </div>
+  <div class="c" id="telbox" hidden>
+    <div class="it"><div class="tx"><b>📱 Sur ce téléphone</b><span class="mut" id="telst"></span></div></div>
+    <div class="btns"><button class="s" id="notifOk">🔔 Autoriser la lecture des notifications</button><button class="s" id="lieuOk">📍 Autoriser la localisation</button></div>
+    <p class="mut" style="margin:6px 0 0">Widget : appuie longtemps sur l'écran d'accueil → Widgets → Claire.</p>
+  </div>
+  </div>
+
   <h2>🧠 Ce que Claire a retenu</h2>
   <div class="c" id="memoire"></div>
   <p class="mut" style="text-align:center;margin-top:24px">Google relié : <span id="google">—</span></p>
@@ -132,6 +163,7 @@ function draw(j) {
   const ap = j.appels || [];
   $('#appels').innerHTML = ap.length ? ap.map(a => `<div class="it"><div class="tx"><b class="${a.urgence === 'haute' ? 'urg' : ''}">${a.urgence === 'haute' ? '🚨 ' : ''}${esc(a.nom || 'Inconnu')}</b> <span class="mut" style="display:inline">${esc(a.tel)}</span><span class="mut">${esc(a.quand)} · ${esc(a.motif || '')}</span>${a.action ? `<span class="mut">✅ ${esc(a.action)}</span>` : ''}${a.wa_ok === false ? '<span class="mut urg">WhatsApp non envoyé</span>' : ''}</div></div>`).join('') : '<p class="mut" style="margin:0">Aucun appel pour le moment.</p>';
   $('#consbox').hidden = !j.langue;
+  drawPlus(j);
   const lg = j.langue || 'francais';
   $('#lgfr').style.cssText = lg === 'francais' ? 'background:linear-gradient(135deg,#45c8ff,#8a7dff);color:#fff' : ''; $('#lgdar').style.cssText = lg === 'darija' ? 'background:linear-gradient(135deg,#45c8ff,#8a7dff);color:#fff' : '';
   const co = j.consignes || [];
@@ -139,6 +171,49 @@ function draw(j) {
   const me = j.memoire || [];
   $('#memoire').innerHTML = me.length ? me.map(m => `<div class="it"><div class="tx">${esc(m.texte)}<span class="mut">${m.sujet ? esc(m.sujet) + ' · ' : ''}${esc(m.le)}</span></div><button class="s" data-mem="${m.id}" aria-label="Oublier">✕</button></div>`).join('') : '<p class="mut" style="margin:0">Rien pour l\'instant. Dis à Claire « retiens que… ».</p>';
 }
+// pouvoirs de Claire : toujours avec le code personnel (serveur claire-plus)
+async function plus(op, data = {}, btn) {
+  if (!CODE) return toast('Entre d\'abord ton code personnel dans l\'appli Claire.');
+  if (btn) btn.disabled = true;
+  try {
+    const r = await fetch(API2, { method: 'POST', headers: { 'content-type': 'application/json', 'x-claire-app': CODE }, body: JSON.stringify({ op, ...data }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { toast('⚠️ ' + (j.erreur || 'Problème, réessaie.'), 5000); return null; }
+    if (j.msg) toast(j.msg, 5000);
+    if (j.url) return j;
+    drawPlus(j); return j;
+  } catch (e) { toast('⚠️ Pas de connexion, réessaie.'); return null; }
+  finally { if (btn) btn.disabled = false; }
+}
+function drawPlus(j) {
+  if (j.el === undefined) return;
+  $('#plusbox').hidden = false;
+  $('#elst').innerHTML = j.el ? '✅ <b>Clé enregistrée</b> : vocaux Telegram, réponses à voix haute, mémoire automatique et protection actifs.' : 'Pour comprendre tes vocaux Telegram, te répondre à voix haute, retenir tout seul ce qui compte, et protéger Claire (seule ton appli pourra lui parler).';
+  $('#delEl').hidden = !j.el;
+  $('#opt_alertes').checked = !!j.alertes; $('#opt_memo').checked = !!j.memoire_auto;
+}
+$('#saveEl').onclick = e => { const k = $('#elkey').value.trim(); if (!/^sk_|^[a-f0-9]{30,}$/i.test(k)) return toast('Colle la clé qui commence par sk_'); plus('el_key', { cle: k }, e.target).then(j => { if (j) $('#elkey').value = ''; }); };
+$('#delEl').onclick = e => { if (confirm('Retirer la clé ElevenLabs ?')) plus('el_key', { cle: '' }, e.target); };
+$('#opt_alertes').onchange = e => plus('opt', { alertes: e.target.checked });
+$('#opt_memo').onchange = e => plus('opt', { memoire_auto: e.target.checked });
+$('#saveNow').onclick = e => plus('sauvegarde', {}, e.target);
+$('#mailOk').onclick = async e => { const j = await plus('google_lien', {}, e.target); if (j && j.url) location.href = j.url; };
+const BV = () => { try { return JSON.parse(localStorage.getItem('claire_brief_voix') || '{}') || {}; } catch (e) { return {}; } };
+$('#bv_on').checked = !!BV().on; $('#bv_h').value = BV().h || '07:30';
+const saveBV = () => { try { localStorage.setItem('claire_brief_voix', JSON.stringify({ on: $('#bv_on').checked, h: $('#bv_h').value || '07:30' })); } catch (e) {} toast($('#bv_on').checked ? '☀️ Briefing à voix haute chaque jour à ' + ($('#bv_h').value || '07:30') + (window.ClaireApp ? '' : ' (dans l\'appli Android)') : 'Briefing à voix haute coupé'); };
+$('#bv_on').onchange = saveBV; $('#bv_h').onchange = saveBV;
+const APP = window.ClaireApp;
+function telEtat() {
+  if (!APP || !APP.notifAccess) { if (APP) { $('#telbox').hidden = false; $('#telst').textContent = 'Installe la version 10 de l\'appli Claire pour les notifications, les rappels de lieu et le widget.'; $('#notifOk').hidden = $('#lieuOk').hidden = true; } return; }
+  $('#telbox').hidden = false;
+  const n = APP.notifAccess(), l = APP.locationState();
+  $('#telst').textContent = (n ? '🔔 Notifications : autorisées' : '🔔 Notifications : pas encore autorisées') + ' · ' + (l === 'toujours' ? '📍 Localisation : toujours' : l === 'premier_plan' ? '📍 Localisation : choisis « Toujours autoriser »' : '📍 Localisation : pas encore autorisée');
+  $('#notifOk').hidden = n; $('#lieuOk').hidden = l === 'toujours';
+}
+$('#notifOk').onclick = () => APP.openNotifAccess();
+$('#lieuOk').onclick = () => APP.askLocation();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) telEtat(); });
+telEtat();
 const wa = () => ({ wa_phone: $('#wa_phone').value, wa_key: $('#wa_key').value, briefing_on: $('#briefing_on').checked, briefing_heure: $('#briefing_heure').value });
 $('#saveWa').onclick = e => call('wa', wa(), e.target);
 $('#testWa').onclick = e => call('wa', { ...wa(), test: true }, e.target);
@@ -156,7 +231,7 @@ document.addEventListener('click', e => {
 // téléphone verrouillé (appli Claire ouverte par-dessus l'écran de verrouillage) : les réglages restent fermés
 let verrou = false; try { verrou = !!(window.ClaireApp && window.ClaireApp.isLocked && window.ClaireApp.isLocked()); } catch (e) {}
 if (verrou) { $('#lock').innerHTML = '<p>🔒 Déverrouille ton téléphone pour ouvrir les réglages de Claire.</p><p><a href="./">← Retour à Claire</a></p>'; $('#lock').hidden = false; }
-else if (L || CODE) call('get'); else $('#lock').hidden = false;
+else if (L || CODE) { call('get'); if (L && CODE) plus('get'); } else $('#lock').hidden = false;
 </script>
 </body>
 </html>

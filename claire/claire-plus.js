@@ -6,6 +6,28 @@ var cxURL = "https://vmhznuivhwwfphmypsic.supabase.co/functions/v1/claire-plus/w
   cxS = Xe.get("srv", { appels: [], contacts: [], google: "", wa: false }),
   cxBusy = !1, cxFaux = !1, cxPause = 0;   // code refusé ou trop d'essais : on arrête d'interroger le serveur
 
+/* jeton de conversation : demandé au serveur de Claire quand la clé ElevenLabs y est enregistrée
+   (l'agent n'accepte alors plus que les conversations ouvertes par ton appli) ; sinon jeton public */
+var cxSU = "";
+function cxJeton(agent) {
+  var pub = function () { return fetch("https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=" + agent + "&source=js_sdk&version=1.37.1").then(function (r) { return r.ok ? r.json() : null; }); };
+  var code = Xe.get("cle", ""), srv = Xe.get("srv", {}) || {};
+  if (!code || !srv.el) return pub();
+  return fetch("https://vmhznuivhwwfphmypsic.supabase.co/functions/v1/claire-plus/web/reglages", { method: "POST", headers: { "content-type": "application/json", "x-claire-app": code }, body: '{"op":"jeton"}' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (j) { if (j && j.token) { cxSU = j.signed_url || ""; return j; } return pub(); })
+    .catch(pub);
+}
+function cxPrendSU() { var u = cxSU; cxSU = ""; return u; }
+/** appel simple au serveur de Claire (sans toucher à l'état de l'appli) */
+async function cxOp(op, data) {
+  var code = Xe.get("cle", ""); if (!code) return null;
+  try {
+    var r = await fetch(cxURL, { method: "POST", headers: { "content-type": "application/json", "x-claire-app": code }, body: JSON.stringify(Object.assign({ op: op }, data || {})) });
+    return r.ok ? await r.json() : null;
+  } catch (e) { return null; }
+}
+
 function cxTel(s) {
   var t = String(s || "").replace(/[^\d+]/g, "");
   if (!t) return "";
@@ -41,8 +63,11 @@ async function cxSrv(op, data) {
     if (r.status === 429) { cxPause = Date.now() + 3600e3; if (j.erreur) St(j.erreur, 4e3); return null; }
     if (!r.ok) { if (j.erreur) St(j.erreur, 4e3); return null; }
     cxFaux = !1;
-    cxS = { appels: j.appels || [], contacts: j.contacts || [], google: j.google || "", wa: !!j.wa_key, tg: !!j.tg, tgBot: !!j.tg_bot, pref: j.preferences || "aucune", langue: j.langue || "francais" };
+    var avantEl = !!(cxS && cxS.el);
+    cxS = { appels: j.appels || [], contacts: j.contacts || [], google: j.google || "", wa: !!j.wa_key, tg: !!j.tg, tgBot: !!j.tg_bot, pref: j.preferences || "aucune", langue: j.langue || "francais", el: !!j.el };
     Xe.set("srv", cxS);
+    if (cxS.el !== avantEl && !fe) { Xn = null; setTimeout(Zn, 300); }   // la protection vient de changer : nouveau jeton
+    try { if (window.ClaireApp && window.ClaireApp.widget && typeof j.prochain === "string") window.ClaireApp.widget(j.prochain ? "📅 " + j.prochain : ""); } catch (e) {}
     if (j.msg) St(j.msg, 3e3);
     cxEtat(); cd();
     return j;
