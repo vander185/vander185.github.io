@@ -109,8 +109,9 @@ h2{letter-spacing:.01em}
     <p class="mut" style="margin:4px 0 0">Téléphone verrouillé : Claire dit seulement la météo et le nombre de rendez-vous, rien de personnel.</p>
   </div>
   <div class="c">
-    <div class="btns" style="margin-top:0"><button class="s" id="mailOk">✉️ Autoriser l'envoi d'e-mails</button></div>
-    <p class="mut" style="margin:6px 0 0">Relie Google une nouvelle fois et accepte « envoyer des e-mails ». Claire relit toujours l'e-mail et attend ton « oui » avant d'envoyer.</p>
+    <div id="mailbox"><div class="btns" style="margin-top:0"><button class="s" id="mailOk">✉️ Autoriser l'envoi d'e-mails</button></div>
+    <p class="mut" style="margin:6px 0 0">Relie Google une nouvelle fois et accepte « envoyer des e-mails ». Claire relit toujours l'e-mail et attend ton « oui » avant d'envoyer.</p></div>
+    <p class="mut" id="mailst" hidden style="margin:0">✅ <b>Envoi d'e-mails autorisé</b> : Claire relit toujours l'e-mail et attend ton « oui » avant d'envoyer.</p>
     <div class="btns"><button class="s" id="saveNow">💾 Sauvegarder maintenant</button></div>
     <p class="mut" style="margin:6px 0 0">Chaque dimanche à 20 h, Claire t'envoie aussi sur Telegram une sauvegarde de sa mémoire, tes contacts et tes consignes.</p>
   </div>
@@ -191,6 +192,7 @@ function drawPlus(j) {
   $('#elst').innerHTML = j.el ? '✅ <b>Clé enregistrée</b> : vocaux Telegram, réponses à voix haute, mémoire automatique et protection actifs.' : 'Pour comprendre tes vocaux Telegram, te répondre à voix haute, retenir tout seul ce qui compte, et protéger Claire (seule ton appli pourra lui parler).';
   $('#delEl').hidden = !j.el;
   $('#opt_alertes').checked = !!j.alertes; $('#opt_memo').checked = !!j.memoire_auto;
+  $('#mailbox').hidden = !!j.mail; $('#mailst').hidden = !j.mail;
 }
 $('#saveEl').onclick = e => { const k = $('#elkey').value.trim(); if (!/^sk_|^[a-f0-9]{30,}$/i.test(k)) return toast('Colle la clé qui commence par sk_'); plus('el_key', { cle: k }, e.target).then(j => { if (j) $('#elkey').value = ''; }); };
 $('#delEl').onclick = e => { if (confirm('Retirer la clé ElevenLabs ?')) plus('el_key', { cle: '' }, e.target); };
