@@ -50,6 +50,7 @@ function cxVoixOuvrir() { ne("#voixbox").hidden = !1; cxVoixDessin(); }
 function cxVoixFermer() {
   try { cxAudio && cxAudio.pause(); } catch (e) {}
   ne("#voixbox").hidden = !0; cxEtat();
+  var c = cxVoixCur(); if (Xe.get("voix_srv", "") !== c.id + "|" + c.p) cxSrv("voix", { voix_id: c.id, prenom: c.p }).then(function (r) { r && !r.faux && Xe.set("voix_srv", c.id + "|" + c.p); });   // même voix au téléphone et sur Telegram
   St("Voix : " + cxVoixCur().p + (fe ? " (à la prochaine conversation)" : ""));
 }
 ne("#vxn").addEventListener("input", function () {
