@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#081030">
 <link rel="preconnect" href="https://api.elevenlabs.io" crossorigin>
 <link rel="preconnect" href="https://livekit.rtc.elevenlabs.io" crossorigin>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob: data:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://fr.wikipedia.org https://*.elevenlabs.io wss://*.elevenlabs.io https://*.livekit.cloud wss://*.livekit.cloud https://vmhznuivhwwfphmypsic.supabase.co; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob: data: https://storage.googleapis.com https://*.elevenlabs.io; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://fr.wikipedia.org https://*.elevenlabs.io wss://*.elevenlabs.io https://*.livekit.cloud wss://*.livekit.cloud https://vmhznuivhwwfphmypsic.supabase.co; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'">
 <title>Claire</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
@@ -50,6 +50,18 @@ header{display:flex;align-items:center;justify-content:space-between;padding:12p
 #key.ok{border-color:var(--line);opacity:.75}
 #keybox{position:fixed;inset:0;z-index:20;background:#05040bcc;display:flex;align-items:center;justify-content:center;padding:20px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #keybox[hidden]{display:none}
+#voixbox{position:fixed;inset:0;z-index:20;background:#05040bcc;display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#voixbox[hidden]{display:none}
+#vxl{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto}
+.vx{display:flex!important;flex-direction:row!important;text-align:left;align-items:center;gap:12px;padding:12px 12px 12px 14px;border:1px solid var(--line);border-radius:16px;background:#ffffff08;cursor:pointer}
+.vx.on{border-color:var(--p);background:#45c8ff14}
+.vxr{flex:none;width:18px;height:18px;border-radius:50%;border:2px solid #ffffff44}
+.vx.on .vxr{border-color:var(--p);background:radial-gradient(var(--p) 45%,transparent 50%)}
+.vxt{flex:1;display:flex!important;flex-direction:column!important;align-items:flex-start!important;text-align:left}.vxt b{font-size:16px}.vxt small{color:var(--mut);font-size:13px}
+.vxplay{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#ffffff10;color:var(--txt);font-size:15px;cursor:pointer}
+#vxnw{display:flex;flex-direction:column;gap:6px;color:var(--mut);font-size:13px}
+#vxnw[hidden]{display:none}
+#vxn{font-family:inherit!important;font-size:17px!important;font-weight:600!important;padding:12px 14px!important;letter-spacing:0!important;text-transform:none!important;text-align:left!important}
 #micbox{position:fixed;inset:0;z-index:20;background:#05040bcc;display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #micbox[hidden]{display:none}
 .meter{height:12px;border-radius:99px;background:#0c0a14;border:1px solid #ffffff1a;overflow:hidden}
@@ -147,6 +159,13 @@ body.locked .stage:after{content:'🔒 Téléphone verrouillé : tes notes reste
 Claire</div>
   <div class="hr"><a id="reg" href="reglages.html" aria-label="Réglages">⚙️</a><button id="key" type="button" aria-label="Code personnel">🔑</button><button id="wake" type="button"><b>Réveil vocal<small></small></b><i></i></button></div>
 </header>
+<div id="voixbox" class="sheet" hidden><div class="kcard">
+  <h3>🗣️ Voix de ton assistant</h3>
+  <p>Choisis la voix qui te répond. Touche ▶ pour écouter un extrait. Ça ne change pas le prix.</p>
+  <div id="vxl"></div>
+  <label id="vxnw" hidden>Son prénom<input id="vxn" maxlength="20" autocomplete="off" spellcheck="false" placeholder="Sam"></label>
+  <div class="kb"><button type="button" id="vxok">C'est bon</button></div>
+</div></div>
 <div id="micbox" class="sheet" hidden><div class="kcard">
   <h3>🎙️ Sensibilité du micro</h3>
   <p>Règle à quel point Claire t'entend. Parle normalement : la barre doit monter dans le vert.</p>
