@@ -964,6 +964,7 @@ tk.lire_notifications = function (p) {
   if (Np()) return "Refusé : le téléphone est verrouillé. Dis à Ahmed de le déverrouiller pour entendre ses notifications.";
   var A = window.ClaireApp;
   if (!A || !A.notifications) return "Erreur : la lecture des notifications ne marche que dans l'appli Claire pour Android (version 10 ou plus récente).";
+  if (A.notifDispo && !A.notifDispo()) return "Erreur : cette version de l'appli ne peut pas lire les notifications (Google bloque cette fonction pour les applis installées hors Play Store). Dis-le simplement à Ahmed.";
   if (!A.notifAccess()) { setTimeout(function () { try { A.openNotifAccess(); } catch (e) {} }, 900); return "Erreur : Ahmed n'a pas encore autorisé Claire à lire ses notifications. Le réglage s'ouvre : il doit activer « Claire », puis revenir et te redemander."; }
   var l = []; try { l = JSON.parse(A.notifications(Math.max(5, Math.min(Number(p.minutes) || 720, 1440)))) || []; } catch (e) {}
   var f = cxSans(p.app || "");

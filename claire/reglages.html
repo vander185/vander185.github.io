@@ -206,9 +206,9 @@ const APP = window.ClaireApp;
 function telEtat() {
   if (!APP || !APP.notifAccess) { if (APP) { $('#telbox').hidden = false; $('#telst').textContent = 'Installe la version 10 de l\'appli Claire pour les notifications, les rappels de lieu et le widget.'; $('#notifOk').hidden = $('#lieuOk').hidden = true; } return; }
   $('#telbox').hidden = false;
-  const n = APP.notifAccess(), l = APP.locationState();
-  $('#telst').textContent = (n ? '🔔 Notifications : autorisées' : '🔔 Notifications : pas encore autorisées') + ' · ' + (l === 'toujours' ? '📍 Localisation : toujours' : l === 'premier_plan' ? '📍 Localisation : choisis « Toujours autoriser »' : '📍 Localisation : pas encore autorisée');
-  $('#notifOk').hidden = n; $('#lieuOk').hidden = l === 'toujours';
+  const dispo = !APP.notifDispo || APP.notifDispo(), n = dispo && APP.notifAccess(), l = APP.locationState();
+  $('#telst').textContent = (!dispo ? '🔔 Notifications : indisponibles dans cette version' : n ? '🔔 Notifications : autorisées' : '🔔 Notifications : pas encore autorisées') + ' · ' + (l === 'toujours' ? '📍 Localisation : toujours' : l === 'premier_plan' ? '📍 Localisation : choisis « Toujours autoriser »' : '📍 Localisation : pas encore autorisée');
+  $('#notifOk').hidden = n || !dispo; $('#lieuOk').hidden = l === 'toujours';
 }
 $('#notifOk').onclick = () => APP.openNotifAccess();
 $('#lieuOk').onclick = () => APP.askLocation();
