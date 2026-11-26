@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Claire</title>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,#1a2a6c 0%,#050a20 70%);color:#fff;font:17px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;text-align:center;padding:24px;box-sizing:border-box}
+.c{max-width:360px;background:#ffffff0d;border:1px solid #7cc4ff33;border-radius:24px;padding:32px 24px;backdrop-filter:blur(10px)}
+.i{width:84px;height:84px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;font-size:40px;background:radial-gradient(circle at 35% 30%,#7fe0ff,#5b6cff 60%,#a46bff);box-shadow:0 0 40px #45c8ff66}
+.i.ko{background:radial-gradient(circle at 35% 30%,#ffb38a,#ff5b6c 60%,#b3365b);box-shadow:0 0 40px #ff5b6c55}
+h1{font-size:22px;margin:0 0 10px}p{margin:0 0 18px;color:#c9d3f5;white-space:pre-line}
+a{display:block;padding:14px;border-radius:14px;color:#fff;text-decoration:none;font-weight:600;background:linear-gradient(135deg,#45c8ff,#8a7dff 60%,#c58cff)}
+</style></head><body><div class="c"><div class="i" id="i">✓</div><h1 id="h">C'est fait !</h1><p id="t"></p><a href="./">Retourner à Claire</a></div>
+<script>
+var q = new URLSearchParams(location.search), ok = q.get("ok") !== "0", t = (q.get("t") || "").slice(0, 400);
+document.getElementById("t").textContent = t || "Tu peux fermer cette page.";
+if (!ok) { document.getElementById("i").textContent = "!"; document.getElementById("i").className = "i ko"; document.getElementById("h").textContent = "Oups"; }
+</script></body></html>

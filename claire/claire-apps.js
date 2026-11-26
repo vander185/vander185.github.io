@@ -571,3 +571,71 @@ tk.envoyer_whatsapp = async function (p) {
   setTimeout(function () { td("https://wa.me/" + num.replace("+", "") + "?text=" + encodeURIComponent(msg)); }, 600);
   return "WhatsApp est ouvert sur la conversation avec " + c.nom + ", le message est écrit : Ahmed n'a plus qu'à toucher Envoyer (WhatsApp ne permet pas d'envoyer à sa place).";
 };
+
+/* ---------- Claire+ : répondre aux messages reçus, SMS directs, mode voiture ---------- */
+var cxPremier = null, cxVoitureT = 0;
+function cxVoitureOn() { try { return !!(window.ClaireApp && window.ClaireApp.voiture && window.ClaireApp.voiture()); } catch (e) { return false; } }
+/** mode voiture : un message vient d'arriver, Claire le lit et propose de répondre */
+window.claireMessage = function (t, lock) {
+  t = String(t || ""); if (!t) return;
+  if (fe || Bi) { St("💬 " + t, 9000); return; }
+  Ms(!!lock);
+  cxVoitureT = Date.now(); cxPremier = t; St("💬 " + t, 9000); Vi();
+  setTimeout(function () { cxPremier = null; }, 6000);
+};
+(function () {
+  var m = location.search.match(/[?&]message=([^&]*)/);
+  if (m) { var t = decodeURIComponent(m[1].replace(/\+/g, " ")), l = /[?&]lock=1/.test(location.search); history.replaceState(null, "", location.pathname); setTimeout(function () { window.claireMessage(t, l); }, 900); }
+})();
+function cxMessagesRepondables(qui, app) {
+  var A = window.ClaireApp, l = [];
+  try { l = JSON.parse(A.notifications(720)) || []; } catch (e) { return null; }
+  var sq = cxSimple(qui), sa = cxSimple(app || "");
+  return l.filter(function (n) {
+    if (!n.repondre) return false;
+    if (sa && cxSimple(n.app).indexOf(sa) < 0 && cxSimple(n.pkg).indexOf(sa) < 0) return false;
+    return !sq || cxSimple(n.titre).indexOf(sq) >= 0 || sq.split(" ").every(function (m) { return cxSimple(n.titre).indexOf(m) >= 0; });
+  }).sort(function (a, b) { return b.t - a.t; });
+}
+tk.repondre_message = function (p) {
+  var A = window.ClaireApp;
+  if (Np() && !(cxVoitureOn() && Date.now() - cxVoitureT < 180000)) return "Refusé : le téléphone est verrouillé. Dis à Ahmed de le déverrouiller pour répondre.";
+  if (!A || !A.repondreNotif) return "Erreur : répondre à un message ne marche que dans l'appli Claire pour Android (version 10.6 ou plus récente).";
+  if (A.notifDispo && !A.notifDispo() || !A.notifAccess()) return "Erreur : Claire n'a pas accès aux notifications. Dis à Ahmed d'aller dans Réglages > « Autoriser la lecture des notifications ».";
+  var texte = String(p.texte || "").trim(); if (!texte) return "Erreur : quel texte faut-il répondre ?";
+  var l = cxMessagesRepondables(p.qui || "", p.app || "");
+  if (!l || !l.length) return "Je ne trouve pas de message récent de « " + (p.qui || "?") + " » auquel répondre (la notification a peut-être été ouverte ou effacée). Propose plutôt envoyer_whatsapp ou envoyer_sms.";
+  var noms = {}; l.forEach(function (n) { noms[n.titre] = 1; });
+  if (Object.keys(noms).length > 1) return "Plusieurs conversations correspondent : " + Object.keys(noms).slice(0, 5).join(" ; ") + ". Demande à Ahmed laquelle, puis rappelle l'outil avec le nom exact.";
+  var n = l[0], dernier = n.dernier || n.texte;
+  if (!p.confirme) return "Dernier message de " + n.titre + " sur " + n.app + " : « " + dernier + " ». Relis à Ahmed la réponse « " + texte + " » et demande « Je l'envoie ? ». S'il dit oui, rappelle cet outil avec confirme=true, le même qui et le même texte.";
+  var r = A.repondreNotif(n.cle, texte);
+  if (r === "ok") { St("✅ Réponse envoyée à " + n.titre, 5000); return "Réponse envoyée à " + n.titre + " sur " + n.app + "."; }
+  if (r === "introuvable") return "La notification de " + n.titre + " a disparu (message ouvert ou effacé) : je ne peux plus y répondre directement. Propose envoyer_whatsapp ou envoyer_sms.";
+  return "Erreur : la réponse n'a pas pu partir. Propose envoyer_whatsapp ou envoyer_sms.";
+};
+window.cxSmsResultat = function (r) { St(r === "envoye" ? "✅ SMS envoyé" : r === "refuse" ? "SMS non envoyé : autorisation refusée" : "Le SMS n'a pas pu partir", 6000); };
+tk.envoyer_sms = async function (p) {
+  if (Np()) return "Refusé : le téléphone est verrouillé. Dis à Ahmed de le déverrouiller pour envoyer un SMS.";
+  var q = String(p.numero_ou_nom || "").trim(), msg = String(p.message || "").trim(), A = window.ClaireApp;
+  if (!q || !msg) return "Erreur : il faut le destinataire et le texte du SMS.";
+  var r = await cxTrouver(q), l = r.liste;
+  if (!l.length) return cxPasTrouve(q, r);
+  if (l.length > 1) return "Plusieurs contacts correspondent : " + cxListe(l) + ". Demande à Ahmed lequel, puis rappelle cet outil avec le nom complet ou le numéro.";
+  var c = l[0], num = cxTel(cxNumPrincipal(c));
+  if (!p.confirme) return "Destinataire : " + c.nom + " (" + cxTelVu(num) + "). Relis le SMS à Ahmed et demande « J'envoie à " + c.nom + " : … ? ». S'il dit oui, rappelle cet outil avec confirme=true.";
+  if (!A || !A.envoyerSms) { setTimeout(function () { td("sms:" + num + "?body=" + encodeURIComponent(msg)); }, 600); return "Le SMS est prêt dans Messages : Ahmed doit toucher Envoyer."; }
+  var e = A.envoyerSms(num, msg);
+  if (e === "envoye") { St("✅ SMS envoyé à " + c.nom, 5000); return "SMS envoyé à " + c.nom + "."; }
+  if (e === "autorisation") return "Le téléphone demande l'autorisation d'envoyer des SMS (une seule fois) : dis à Ahmed de toucher Autoriser, le SMS partira tout de suite après.";
+  return "Erreur : le SMS n'a pas pu partir (pas de réseau ou pas de carte SIM ?).";
+};
+tk.mode_voiture = function (p) {
+  var A = window.ClaireApp;
+  if (!A || !A.setVoiture) return "Erreur : le mode voiture ne marche que dans l'appli Claire pour Android (version 10.6 ou plus récente).";
+  var on = p.actif !== false;
+  if (on && (A.notifDispo && !A.notifDispo() || !A.notifAccess())) return "Erreur : pour le mode voiture, Claire doit pouvoir lire les notifications. Dis à Ahmed d'aller dans Réglages > « Autoriser la lecture des notifications ».";
+  A.setVoiture(on);
+  St(on ? "🚗 Mode voiture activé" : "Mode voiture coupé", 5000);
+  return on ? "Mode voiture activé : chaque nouveau message (WhatsApp, SMS, Messenger, Telegram…) sera lu à voix haute, et Ahmed pourra répondre à la voix. Pour l'arrêter : « Claire, coupe le mode voiture »." : "Mode voiture coupé.";
+};
