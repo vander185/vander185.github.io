@@ -214,3 +214,49 @@ tk.rappel_lieu = async function (p) {
   if (st === "premier_plan") setTimeout(function () { try { A.askLocation(); } catch (e) {} }, 1500);
   return "Rappel n° " + n + " créé : " + (dep ? "en partant de " : "en arrivant à ") + nom + (adr ? " (" + adr + ")" : "") + " → « " + t + " »." + (st === "premier_plan" ? " Pour que ça marche téléphone en poche, Ahmed doit choisir « Toujours autoriser » dans la fenêtre qui s'ouvre." : "") + " Le rappel peut arriver avec une ou deux minutes de retard.";
 };
+
+/* ---------- Claire+ : réactivité pendant la conversation ----------
+   - le rond grossit avec ta voix et avec celle de Claire
+   - pendant que tu parles, une bulle « … » montre qu'elle t'entend
+   - entre ta phrase et sa réponse : état « Je réfléchis… » */
+(function () {
+  var st = document.createElement("style");
+  st.textContent = "#orb .core{scale:calc(1 + var(--vol,0) * .11);transition:transform .2s,scale .09s linear}" +
+    "#orb .halo{scale:calc(1 + var(--vol,0) * .18)}" +
+    "body[data-state=thinking] #orb .halo{animation:spin 2.2s linear infinite;opacity:.65}" +
+    "body[data-state=thinking] #orb .core{animation:breathe 1.4s ease-in-out infinite}" +
+    ".msg.user.live{opacity:.75;font-style:italic;letter-spacing:.05em}" +
+    ".msg.user.live span{display:inline-block;animation:cxpt 1.1s infinite}.msg.user.live span:nth-child(2){animation-delay:.18s}.msg.user.live span:nth-child(3){animation-delay:.36s}" +
+    "@keyframes cxpt{0%,60%,100%{opacity:.25}30%{opacity:1}}";
+  document.head.appendChild(st);
+  var orb = ne("#orb"), vol = 0, parle = 0, silence = 0, bulle = null, t0 = performance.now();
+  function retireBulle() { if (bulle) { bulle.remove(); bulle = null; } }
+  function boucle(t) {
+    var dt = t - t0; t0 = t;
+    var s = document.body.dataset.state, brut = 0;
+    var ecoute = s === "listening" || s === "thinking";
+    try { if (fe && (ecoute || s === "speaking")) brut = s === "speaking" ? fe.getOutputVolume() : fe.getInputVolume(); } catch (e) {}
+    vol = vol * 0.72 + Math.min(1, brut * 3) * 0.28;
+    if (orb) orb.style.setProperty("--vol", vol.toFixed(3));
+    if (fe && ecoute && !cxT && !cxAnnonce) {   // il parle : bulle « … »
+      if (brut > 0.06) { parle += dt; silence = 0; } else { silence += dt; if (silence > 400) parle = 0; }
+      if (parle > 220 && !bulle) {
+        bulle = document.createElement("div"); bulle.className = "msg user live";
+        bulle.innerHTML = "🎙️ <span>•</span><span>•</span><span>•</span>";
+        var lg = ne("#log"); lg.appendChild(bulle); lg.scrollTop = lg.scrollHeight;
+      }
+      if (bulle && silence > 6000) retireBulle();   // rien compris : on n'encombre pas
+    } else { parle = 0; if (!ecoute) retireBulle(); }
+    requestAnimationFrame(boucle);
+  }
+  requestAnimationFrame(boucle);
+  var rdBase = rd;
+  rd = function (qui, texte) {
+    if (qui === "user") { retireBulle(); parle = 0; }
+    rdBase(qui, texte);
+    if (qui === "user" && fe && !cxT && /^(listening|thinking)$/.test(document.body.dataset.state)) {
+      Bt("thinking", "Je réfléchis…");
+      clearTimeout(rd.cxT); rd.cxT = setTimeout(function () { if (fe && document.body.dataset.state === "thinking") Bt("listening", "Je t’écoute…"); }, 15000);   // sécurité
+    }
+  };
+})();
