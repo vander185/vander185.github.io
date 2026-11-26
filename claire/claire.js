@@ -1112,6 +1112,58 @@ tk.rappel_lieu = async function (p) {
   };
 })();
 
+/* ---------- Claire+ : habillage futuriste (anneaux « HUD », verre, grille) ---------- */
+(function () {
+  var orb = ne("#orb"); if (!orb || ne("#orb .hud")) return;
+  var NS = "http://www.w3.org/2000/svg", ticks = "";
+  for (var i = 0; i < 72; i++) { var a = i * 5 * Math.PI / 180, r1 = i % 6 ? 96 : 92, r2 = 99; ticks += '<line x1="' + (110 + r1 * Math.cos(a)).toFixed(2) + '" y1="' + (110 + r1 * Math.sin(a)).toFixed(2) + '" x2="' + (110 + r2 * Math.cos(a)).toFixed(2) + '" y2="' + (110 + r2 * Math.sin(a)).toFixed(2) + '"/>'; }
+  var hud = document.createElementNS(NS, "svg");
+  hud.setAttribute("class", "hud"); hud.setAttribute("viewBox", "0 0 220 220"); hud.setAttribute("aria-hidden", "true");
+  hud.innerHTML =
+    '<defs><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--p)"/><stop offset=".55" style="stop-color:var(--v)"/><stop offset="1" style="stop-color:var(--o)"/></linearGradient></defs>' +
+    '<g class="h1">' + ticks + '</g>' +
+    '<g class="h2"><circle cx="110" cy="110" r="87" pathLength="360" stroke-dasharray="70 20 40 50 90 30 30 30"/></g>' +
+    '<g class="h3"><circle cx="110" cy="110" r="104" pathLength="360" stroke-dasharray="2 10"/><circle class="sat" cx="110" cy="6" r="3"/></g>';
+  orb.insertBefore(hud, orb.querySelector(".core"));
+  var gl = document.createElement("span"); gl.className = "glass"; orb.insertBefore(gl, orb.querySelector(".bars"));
+  var grid = document.createElement("div"); grid.className = "cxgrid"; document.body.insertBefore(grid, document.body.firstChild);
+  var st = document.createElement("style");
+  st.textContent =
+    /* anneaux autour du rond */
+    "#orb{overflow:visible}" +
+    "#orb .hud{position:absolute;inset:-22px;width:calc(100% + 44px);height:calc(100% + 44px);pointer-events:none;overflow:visible;opacity:calc(.55 + var(--vol,0) * .45);transition:opacity .2s}" +
+    "#orb .hud line{stroke:url(#hg);stroke-width:1.2;stroke-linecap:round;opacity:.55}" +
+    "#orb .hud .h2 circle{fill:none;stroke:url(#hg);stroke-width:1.6;stroke-linecap:round;opacity:.8}" +
+    "#orb .hud .h3 circle{fill:none;stroke:#ffffff;stroke-width:1;opacity:.28}" +
+    "#orb .hud .h3 .sat{fill:#fff;stroke:none;opacity:1;filter:drop-shadow(0 0 4px var(--p)) drop-shadow(0 0 8px var(--p))}" +
+    "#orb .hud g{transform-origin:110px 110px;transform-box:view-box}" +
+    "#orb .hud .h1{animation:cxrot 60s linear infinite}" +
+    "#orb .hud .h2{animation:cxrot 24s linear infinite reverse}" +
+    "#orb .hud .h3{animation:cxrot 14s linear infinite}" +
+    "body[data-state=listening] #orb .hud .h2,body[data-state=thinking] #orb .hud .h2{animation-duration:6s}" +
+    "body[data-state=thinking] #orb .hud .h3{animation-duration:2.6s}" +
+    "body[data-state=speaking] #orb .hud .h3{animation-duration:5s}body[data-state=speaking] #orb .hud .h1{animation-duration:20s}" +
+    "body[data-state=connecting] #orb .hud .h2{animation-duration:1.4s}" +
+    "@keyframes cxrot{to{rotate:360deg}}" +
+    /* sphère de verre */
+    "#orb .core{box-shadow:inset 0 -22px 44px #0a124a88,inset 0 8px 22px #ffffff38,0 0 0 1px #ffffff26,0 24px 60px color-mix(in srgb,var(--p) 35%,transparent)!important}" +
+    "#orb .glass{position:absolute;inset:14px;border-radius:50%;pointer-events:none;scale:calc(1 + var(--vol,0) * .11);" +
+      "background:radial-gradient(ellipse 60% 38% at 38% 20%,#ffffffb0,#ffffff00 70%),radial-gradient(circle at 70% 85%,#ffffff26,transparent 40%),conic-gradient(from 0deg,transparent,#ffffff14,transparent 30%,transparent 60%,#ffffff10,transparent);mix-blend-mode:screen;animation:cxrot 18s linear infinite}" +
+    "#orb .bars i{background:linear-gradient(#fff,#e9f3ff);box-shadow:0 0 10px #ffffffaa,0 3px 10px #1b2a7a55}" +
+    /* grille de points en fond */
+    ".cxgrid{position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:radial-gradient(circle,#9fd4ff2e 1px,transparent 1.4px);background-size:22px 22px;" +
+      "-webkit-mask-image:radial-gradient(ellipse 85% 55% at 50% 38%,#000 20%,transparent 75%);mask-image:radial-gradient(ellipse 85% 55% at 50% 38%,#000 20%,transparent 75%);opacity:.55}" +
+    /* statut façon tableau de bord */
+    "#status{font:600 12.5px/1.4 ui-monospace,'SF Mono','Roboto Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:color-mix(in srgb,var(--p) 55%,#e6ecff)}" +
+    "#status:not(:empty):before,#status:not(:empty):after{content:'';display:inline-block;width:18px;height:1px;margin:0 10px;vertical-align:middle;background:linear-gradient(90deg,transparent,currentColor)}#status:not(:empty):after{background:linear-gradient(90deg,currentColor,transparent)}" +
+    /* pastilles et boutons en verre, liseré lumineux */
+    ".ico,#reg{background:linear-gradient(#0f1a44d9,#0f1a44d9) padding-box,linear-gradient(135deg,#ffffff38,#ffffff08 45%,#7cc4ff40) border-box!important;border:1px solid transparent!important;box-shadow:inset 0 1px 0 #ffffff14,0 6px 18px #00000030}" +
+    ".ico.hot{background:linear-gradient(135deg,#ff4d6d,#ff7a59) padding-box,linear-gradient(135deg,#ffffff60,#ffffff10) border-box!important}" +
+    "h1 span,.hello b{text-shadow:0 0 24px color-mix(in srgb,var(--p) 40%,transparent)}";
+  document.head.appendChild(st);
+  // la couleur du liseré des anneaux suit l'humeur (variables héritées du rond)
+})();
+
 var cxVerif=!1;   /* téléphone verrouillé mais voix d'Ahmed reconnue au réveil */
 /* Claire+ : annonce vocale avant la prière (programmée sur le téléphone, dite avec la voix choisie) */
 var cxAnnonce = null, cxAnnT = 0;
