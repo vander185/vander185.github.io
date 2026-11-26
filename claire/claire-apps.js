@@ -99,7 +99,7 @@ async function cxPrepare(file) {
 (function () { var st = document.createElement("style"); st.textContent = "#cxclip{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:#ffd76a;display:grid;place-items:center;font-size:18px;cursor:pointer}#cxdoc{position:fixed;inset:0;z-index:50;background:#050a20e6;display:grid;place-items:center;padding:24px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}#cxdoc[hidden]{display:none}#cxdoc .bx{width:100%;max-width:360px;background:#101a44;border:1px solid #7cc4ff44;border-radius:22px;padding:22px;text-align:center;color:#fff}#cxdoc h3{margin:0 0 6px;font-size:18px}#cxdoc p{margin:0 0 16px;color:#b9c6ee;font-size:14px}#cxdoc button{width:100%;margin-top:10px;padding:14px;border-radius:14px;border:0;font:600 15px inherit;color:#fff;background:linear-gradient(135deg,#45c8ff,#8a7dff 60%,#c58cff);cursor:pointer}#cxdoc button.s{background:#ffffff14}#cxdoc .pr{height:6px;border-radius:3px;background:#ffffff14;overflow:hidden;margin-top:14px}#cxdoc .pr i{display:block;height:100%;width:0;background:linear-gradient(90deg,#45c8ff,#c58cff);transition:width .3s}"; document.head.appendChild(st); })();
 var cxDocBox = document.createElement("div");
 cxDocBox.id = "cxdoc"; cxDocBox.hidden = true;
-cxDocBox.innerHTML = '<div class="bx"><h3>📄 Lire un document</h3><p id="cxdocm">Photographie la lettre ou la facture bien à plat, avec de la lumière.</p><input type="file" accept="image/*" capture="environment" id="cxdocc" hidden><input type="file" accept="image/*" id="cxdocg" hidden><div id="cxdocb"><button type="button" id="cxdocp">📷 Prendre la photo</button><button type="button" class="s" id="cxdocgl">🖼️ Choisir une image</button></div><div class="pr" hidden id="cxdocpr"><i></i></div><button type="button" class="s" id="cxdocx">Annuler</button></div>';
+cxDocBox.innerHTML = '<div class="bx"><h3>📎 Joindre un document</h3><p id="cxdocm"></p><input type="file" accept="image/*" capture="environment" id="cxdocc" hidden><input type="file" accept="image/*" id="cxdocg" hidden><input type="file" accept=".pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.txt,.csv,.md,.html,.doc,.xls,.ppt,application/pdf,text/*,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.ms-excel,application/vnd.oasis.opendocument.text" id="cxdocf" hidden><div id="cxdocb"><button type="button" id="cxdocp">📷 Prendre une photo</button><button type="button" class="s" id="cxdocfl">📁 Choisir un fichier (PDF, Word, Excel…)</button><button type="button" class="s" id="cxdocgl">🖼️ Choisir une image</button></div><div class="pr" hidden id="cxdocpr"><i></i></div><button type="button" class="s" id="cxdocx">Annuler</button></div>';
 document.body.appendChild(cxDocBox);
 var cxDocFin = null;
 function cxDocMsg(t, prog) {
@@ -109,46 +109,170 @@ function cxDocMsg(t, prog) {
 /** ouvre la fenêtre photo et renvoie le texte lu (ou null si annulé) */
 function cxDocument() {
   if (cxDocFin) cxDocFin(null);
-  ne("#cxdocb").hidden = false; cxDocMsg("Photographie la lettre ou la facture bien à plat, avec de la lumière.");
+  ne("#cxdocb").hidden = false; cxDocMsg("Photographie la lettre bien à plat, ou choisis un fichier : PDF, Word, Excel, PowerPoint, texte.");
   cxDocBox.hidden = false;
   return new Promise(function (ok) {
-    cxDocFin = function (t) { cxDocFin = null; cxDocBox.hidden = true; ne("#cxdocc").value = ""; ne("#cxdocg").value = ""; ok(t); };
+    cxDocFin = function (t) { cxDocFin = null; cxDocBox.hidden = true; ne("#cxdocc").value = ne("#cxdocg").value = ne("#cxdocf").value = ""; ok(t); };
   });
 }
 ne("#cxdocp").onclick = function () { ne("#cxdocc").click(); };
 ne("#cxdocgl").onclick = function () { ne("#cxdocg").click(); };
+ne("#cxdocfl").onclick = function () { ne("#cxdocf").click(); };
 ne("#cxdocx").onclick = function () { cxDocFin && cxDocFin(null); };
+/* lecture d'une image : OCR sur le téléphone */
+async function cxLireImage(f) {
+  cxDocMsg("Je prépare la photo…", 0.1);
+  var c = await cxPrepare(f);
+  cxDocMsg(window.Tesseract && cxOW ? "Je lis le document…" : "Je lis le document… (la première fois, ça prend un peu plus de temps)", 0.3);
+  var w = await cxOCR(); cxDocMsg("Je lis le document…", 0.6);
+  var r = await w.recognize(c);
+  return String(r.data && r.data.text || "");
+}
+/* PDF : texte du fichier (pdf.js, hébergé avec l'appli) ; pages scannées lues par OCR */
+var cxPDFBase = "https://vander185.github.io/claire/pdf/", cxPDF = null;
+async function cxChargePDF() {
+  if (cxPDF) return cxPDF;
+  var m = await import(cxPDFBase + "pdf.min.mjs");
+  m.GlobalWorkerOptions.workerSrc = cxPDFBase + "pdf.worker.min.mjs";
+  return (cxPDF = m);
+}
+async function cxLirePDF(f) {
+  cxDocMsg("J'ouvre le PDF…", 0.05);
+  var pdfjs = await cxChargePDF(), doc;
+  try { doc = await pdfjs.getDocument({ data: new Uint8Array(await f.arrayBuffer()), cMapUrl: cxPDFBase + "cmaps/", cMapPacked: true, standardFontDataUrl: cxPDFBase + "standard_fonts/", isEvalSupported: false }).promise; }
+  catch (e) { throw new Error(e && e.name === "PasswordException" ? "mdp" : "pdf"); }
+  var n = Math.min(doc.numPages, 40), parts = [], vides = [];
+  for (var i = 1; i <= n; i++) {
+    cxDocMsg("Je lis le PDF… page " + i + " sur " + n, 0.05 + 0.6 * i / n);
+    var tc = await (await doc.getPage(i)).getTextContent();
+    var t = tc.items.map(function (it) { return (it.str || "") + (it.hasEOL ? "\n" : ""); }).join("");
+    parts.push(t); if (t.replace(/\s/g, "").length < 25) vides.push(i);
+  }
+  /* PDF scanné (images) : on lit jusqu'à 6 pages par OCR */
+  if (vides.length) {
+    var w = await cxOCR(), m = Math.min(vides.length, 6);
+    for (var j = 0; j < m; j++) {
+      cxDocMsg("Page scannée : je la lis… (" + (j + 1) + " sur " + m + ")", 0.65 + 0.33 * j / m);
+      var pg = await doc.getPage(vides[j]), v1 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: Math.min(3, 2200 / Math.max(v1.width, v1.height)) });
+      var c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+      var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
+      await pg.render({ canvasContext: x, viewport: vp }).promise;
+      var r = await w.recognize(c); parts[vides[j] - 1] = String(r.data && r.data.text || "");
+    }
+  }
+  var out = parts.length > 1 ? parts.map(function (t, k) { return "— Page " + (k + 1) + " —\n" + t; }).join("\n\n") : parts[0] || "";
+  if (doc.numPages > n) out += "\n\n(Le PDF a " + doc.numPages + " pages : seules les " + n + " premières ont été lues.)";
+  try { doc.destroy(); } catch (e) {}
+  return out;
+}
+/* Word, Excel, PowerPoint, OpenDocument : ce sont des fichiers zip contenant du XML */
+async function cxZip(buf, garder) {
+  var dv = new DataView(buf), u8 = new Uint8Array(buf), out = {}, e = -1, td = new TextDecoder();
+  for (var i = u8.length - 22; i >= Math.max(0, u8.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error("abime");
+  var n = dv.getUint16(e + 10, true), p = dv.getUint32(e + 16, true);
+  for (var k = 0; k < n && dv.getUint32(p, true) === 0x02014b50; k++) {
+    var meth = dv.getUint16(p + 10, true), csz = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), off = dv.getUint32(p + 42, true);
+    var nom = td.decode(u8.subarray(p + 46, p + 46 + nl));
+    p += 46 + nl + dv.getUint16(p + 30, true) + dv.getUint16(p + 32, true);
+    if (!garder(nom) || (meth !== 0 && meth !== 8)) continue;
+    var deb = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true), d = u8.slice(deb, deb + csz);
+    if (meth === 8) d = new Uint8Array(await new Response(new Blob([d]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());
+    out[nom] = td.decode(d);
+  }
+  return out;
+}
+function cxXml(x, fin) {
+  return x.replace(fin, "\n").replace(/<(w|a):tab\/>|<text:tab\/>/g, "\t").replace(/<(w|a):br\/>|<text:line-break\/>/g, "\n").replace(/<[^>]+>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, function (m, c) { return String.fromCharCode(+c); }).replace(/&amp;/g, "&");
+}
+var cxNum = function (a, b) { return (+(a.match(/(\d+)\.xml$/) || [0, 0])[1]) - (+(b.match(/(\d+)\.xml$/) || [0, 0])[1]); };
+async function cxLireOffice(f, ext) {
+  cxDocMsg("J'ouvre le fichier…", 0.3);
+  var buf = await f.arrayBuffer(), z, t = "";
+  if (ext === "docx") {
+    z = await cxZip(buf, function (n) { return /^word\/(document|header\d*|footer\d*|footnotes)\.xml$/.test(n); });
+    t = cxXml(z["word/document.xml"] || "", /<\/w:p>/g);
+  } else if (ext === "pptx") {
+    z = await cxZip(buf, function (n) { return /^ppt\/slides\/slide\d+\.xml$/.test(n); });
+    t = Object.keys(z).sort(cxNum).map(function (n, i) { return "— Diapo " + (i + 1) + " —\n" + cxXml(z[n], /<\/a:p>/g).trim(); }).join("\n\n");
+  } else if (ext === "xlsx") {
+    z = await cxZip(buf, function (n) { return n === "xl/sharedStrings.xml" || /^xl\/worksheets\/sheet\d+\.xml$/.test(n); });
+    var ss = ((z["xl/sharedStrings.xml"] || "").match(/<si>[\s\S]*?<\/si>/g) || []).map(function (s) { return cxXml(s.replace(/<rPh[\s\S]*?<\/rPh>/g, ""), /$^/g); });
+    t = Object.keys(z).filter(function (n) { return n.indexOf("worksheets") > 0; }).sort(cxNum).map(function (n, i) {
+      var lignes = (z[n].match(/<row[^>]*>[\s\S]*?<\/row>/g) || []).slice(0, 400).map(function (r) {
+        return (r.match(/<c [^>]*?(\/>|>[\s\S]*?<\/c>)/g) || []).map(function (c) {
+          var v = (c.match(/<v>([\s\S]*?)<\/v>/) || [])[1], ty = (c.match(/ t="(\w+)"/) || [])[1];
+          if (ty === "s") return ss[+v] || "";
+          if (ty === "inlineStr") return cxXml(c, /$^/g);
+          return v == null ? "" : cxXml(v, /$^/g);
+        }).join(" | ");
+      }).filter(function (l) { return l.replace(/[\s|]/g, ""); });
+      return "— Feuille " + (i + 1) + " —\n" + lignes.join("\n");
+    }).join("\n\n");
+  } else {   /* odt, ods, odp */
+    z = await cxZip(buf, function (n) { return n === "content.xml"; });
+    t = cxXml(z["content.xml"] || "", /<\/text:p>|<\/text:h>|<\/table:table-row>/g);
+  }
+  return t;
+}
+/** lit n'importe quel document choisi et renvoie son texte */
+async function cxLireFichier(f) {
+  var nom = String(f.name || "").toLowerCase(), ext = nom.indexOf(".") >= 0 ? nom.split(".").pop() : "", ty = f.type || "";
+  if (ty.indexOf("image/") === 0 || /^(jpe?g|png|webp|gif|bmp)$/.test(ext)) return cxLireImage(f);
+  if (ext === "pdf" || ty === "application/pdf") return cxLirePDF(f);
+  if (/^(docx|xlsx|pptx|odt|ods|odp)$/.test(ext)) return cxLireOffice(f, ext);
+  if (/^(doc|xls|ppt)$/.test(ext)) throw new Error("ancien");
+  if (ty.indexOf("text/") === 0 || /^(txt|csv|md|json|xml|html?|log|ics|vcf)$/.test(ext)) {
+    cxDocMsg("Je lis le fichier…", 0.5);
+    var t = await f.text();
+    return /^html?$/.test(ext) || ty === "text/html" ? cxXml(t.replace(/<(script|style)[\s\S]*?<\/\1>/gi, ""), /<\/(p|div|li|tr|h\d)>|<br\s*\/?>/gi) : t;
+  }
+  throw new Error("format");
+}
+var cxDocErreurs = {
+  ancien: "C'est un ancien format Office (.doc, .xls, .ppt). Enregistre-le en PDF ou en .docx/.xlsx et réessaie.",
+  format: "Je ne sais pas encore lire ce type de fichier. Essaie un PDF, un Word, un Excel, un PowerPoint, un texte ou une image.",
+  mdp: "Ce PDF est protégé par un mot de passe : je ne peux pas l'ouvrir.",
+  pdf: "Je n'ai pas réussi à ouvrir ce PDF (fichier abîmé ?).",
+  abime: "Ce fichier semble abîmé : je n'arrive pas à l'ouvrir."
+};
 async function cxDocLire(e) {
   var f = e.target.files && e.target.files[0]; if (!f || !cxDocFin) return;
-  ne("#cxdocb").hidden = true; cxDocMsg("Je prépare la photo…", 0.1);
+  var photo = e.target.id !== "cxdocf";
+  ne("#cxdocb").hidden = true;
   try {
-    var c = await cxPrepare(f);
-    cxDocMsg(window.Tesseract && cxOW ? "Je lis le document…" : "Je lis le document… (la première fois, ça prend un peu plus de temps)", 0.3);
-    var w = await cxOCR(); cxDocMsg("Je lis le document…", 0.6);
-    var r = await w.recognize(c), t = String(r.data && r.data.text || "").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+    var t = String(await cxLireFichier(f)).replace(/\r/g, "").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
     cxDocMsg("C'est lu ✓", 1);
-    setTimeout(function () { cxDocFin && cxDocFin(t); }, 300);
-  } catch (er) { cxDocMsg("Je n'ai pas réussi à lire cette image. Réessaie avec plus de lumière."); ne("#cxdocb").hidden = false; }
+    setTimeout(function () { cxDocFin && cxDocFin({ texte: t, nom: f.name || "document", photo: photo && /^image\//.test(f.type || "image/") }); }, 300);
+  } catch (er) {
+    console.warn("document", er);
+    cxDocMsg(cxDocErreurs[er && er.message] || (photo ? "Je n'ai pas réussi à lire cette image. Réessaie avec plus de lumière." : "Je n'ai pas réussi à lire ce fichier."));
+    ne("#cxdocb").hidden = false;
+  }
 }
-ne("#cxdocc").onchange = cxDocLire; ne("#cxdocg").onchange = cxDocLire;
+ne("#cxdocc").onchange = cxDocLire; ne("#cxdocg").onchange = cxDocLire; ne("#cxdocf").onchange = cxDocLire;
+var cxDocMax = 9000;
 tk.lire_document = async function () {
-  St("📷 Touche « Prendre la photo »", 6000);
-  var t = await cxDocument();
-  if (t === null) return "Ahmed a annulé la photo.";
-  if (t.replace(/\s/g, "").length < 15) return "Erreur : presque rien n'a pu être lu sur la photo. Demande à Ahmed de reprendre la photo de plus près, bien à plat et avec de la lumière.";
-  return "Texte lu sur le document (lecture automatique, il peut y avoir de petites erreurs) :\n" + t.slice(0, 6000);
+  St("📎 Prends une photo ou choisis un fichier", 6000);
+  var d = await cxDocument();
+  if (d === null) return "Ahmed a annulé.";
+  var t = d.texte;
+  if (t.replace(/\s/g, "").length < 15) return d.photo ? "Erreur : presque rien n'a pu être lu sur la photo. Demande à Ahmed de reprendre la photo de plus près, bien à plat et avec de la lumière." : "Erreur : ce fichier ne contient presque pas de texte lisible.";
+  return (d.photo ? "Texte lu sur la photo (lecture automatique, il peut y avoir de petites erreurs) :\n" : "Texte du fichier « " + d.nom + " » :\n") + t.slice(0, cxDocMax) + (t.length > cxDocMax ? "\n\n(Document long : seul le début a été lu.)" : "");
 };
 /* trombone 📎 à côté de « Écris à Claire » */
 (function () {
   var f = ne("#cxw"), i = ne("#cxi"); if (!f || !i || ne("#cxclip")) return;
-  var b = document.createElement("button"); b.type = "button"; b.id = "cxclip"; b.setAttribute("aria-label", "Photographier un document"); b.textContent = "📎";
+  var b = document.createElement("button"); b.type = "button"; b.id = "cxclip"; b.setAttribute("aria-label", "Joindre un document ou une photo"); b.textContent = "📎";
   f.insertBefore(b, i);
   b.onclick = async function () {
-    var t = await cxDocument();
-    if (t === null) return;
-    if (t.replace(/\s/g, "").length < 15) { St("Je n'arrive pas à lire ce document : reprends la photo de plus près.", 5000); return; }
-    var q = "[Document photographié] Explique-moi ce document simplement : qui l'envoie, de quoi il s'agit, ce que je dois faire, les dates limites et les montants.\n\n" + t.slice(0, 6000);
-    if (fe) { try { fe.sendUserMessage(q); rd("user", "📄 Document envoyé à Claire"); } catch (e) { St("Message non envoyé"); } return; }
+    var d = await cxDocument();
+    if (d === null) return;
+    var t = d.texte;
+    if (t.replace(/\s/g, "").length < 15) { St(d.photo ? "Je n'arrive pas à lire ce document : reprends la photo de plus près." : "Ce fichier ne contient presque pas de texte lisible.", 5000); return; }
+    var q = (d.photo ? "[Document photographié]" : "[Fichier joint : " + d.nom + "]") + " Explique-moi ce document simplement : qui l'envoie, de quoi il s'agit, ce que je dois faire, les dates limites et les montants.\n\n" + t.slice(0, cxDocMax) + (t.length > cxDocMax ? "\n\n(Document long : seul le début est joint.)" : "");
+    if (fe) { try { fe.sendUserMessage(q); rd("user", "📄 " + (d.photo ? "Document envoyé à Claire" : d.nom)); } catch (e) { St("Message non envoyé"); } return; }
     if (Bi) { St("Patiente une seconde…"); return; }
     cxT = !0; Is = q; Vi();
   };
