@@ -86,7 +86,7 @@ h2{letter-spacing:.01em}
   </div>
   <div class="c" id="telbox" hidden>
     <div class="it"><div class="tx"><b>📱 Sur ce téléphone</b><span class="mut" id="telst"></span></div></div>
-    <div class="btns"><button class="s" id="notifOk">🔔 Autoriser la lecture des notifications</button><button class="s" id="lieuOk">📍 Autoriser la localisation</button></div>
+    <div class="btns"><button class="s" id="notifOk">🔔 Autoriser la lecture des notifications</button><button class="s" id="lieuOk">📍 Autoriser la localisation</button><button class="s" id="contOk" hidden>👥 Autoriser les contacts</button></div>
     <div class="it" id="tlat" hidden style="margin-top:10px"><div class="tx"><b>🔘 Touche latérale</b><span class="mut" id="tlatst"></span></div></div>
     <div class="btns" id="tlatb" hidden><button class="s" id="assistOk">🔘 Choisir Claire comme assistant</button></div>
     <p class="mut" id="tlataide" hidden style="margin:6px 0 0">1. Choisis <b>Claire</b> comme « Appli d'assistance de l'appareil » (ou « Assistant numérique »).<br>2. Puis Paramètres → Fonctions avancées → <b>Touche latérale</b> → Appuyer de manière prolongée → <b>Assistant numérique</b>.<br>Si ton téléphone ne le propose pas : « Appuyer deux fois » → <b>Ouvrir l'application</b> → Claire.</p>
@@ -269,6 +269,7 @@ function telEtat() {
   const dispo = !APP.notifDispo || APP.notifDispo(), n = dispo && APP.notifAccess(), l = APP.locationState();
   $('#telst').textContent = (!dispo ? '🔔 Notifications : indisponibles dans cette version' : n ? '🔔 Notifications : autorisées' : '🔔 Notifications : pas encore autorisées') + ' · ' + (l === 'toujours' ? '📍 Localisation : toujours' : l === 'premier_plan' ? '📍 Localisation : choisis « Toujours autoriser »' : '📍 Localisation : pas encore autorisée');
   $('#notifOk').hidden = n || !dispo; $('#lieuOk').hidden = l === 'toujours';
+  if (APP.contactsOk) { const c = APP.contactsOk(); $('#telst').textContent += ' · ' + (c ? '👥 Contacts : autorisés' : '👥 Contacts : pas encore autorisés (pour « appelle Karim »)'); $('#contOk').hidden = c; }
   $('#tlat').hidden = $('#tlataide').hidden = false;
   if (!APP.assistant) { $('#tlatst').textContent = 'Installe la version 10.3 de l\'appli Claire pour l\'ouvrir avec la touche latérale.'; $('#tlatb').hidden = true; return; }
   const a = APP.assistant();
@@ -277,6 +278,7 @@ function telEtat() {
 }
 $('#assistOk').onclick = () => APP.openAssistant();
 $('#notifOk').onclick = () => APP.openNotifAccess();
+$('#contOk').onclick = () => APP.askContacts();
 $('#lieuOk').onclick = () => APP.askLocation();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) telEtat(); });
 telEtat();

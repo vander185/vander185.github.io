@@ -482,3 +482,92 @@ tk.rappel_lieu = async function (p) {
   document.head.appendChild(st);
   // la couleur du liseré des anneaux suit l'humeur (variables héritées du rond)
 })();
+
+/* ---------- Claire+ : appeler (téléphone ou WhatsApp) et écrire sur WhatsApp, avec le répertoire du téléphone ----------
+   Claire cherche le contact (appli + répertoire du téléphone), fait confirmer à Ahmed, puis l'appel part tout seul. */
+function cxSimple(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim(); }
+async function cxAutoriseContacts() {
+  var A = window.ClaireApp;
+  if (!A || !A.contactsOk) return false;
+  if (A.contactsOk()) return true;
+  A.askContacts();
+  for (var i = 0; i < 60 && !A.contactsOk(); i++) await new Promise(function (r) { setTimeout(r, 500); });
+  return A.contactsOk();
+}
+/** contacts qui correspondent : [{nom, numeros:[{num,type,principal}], wa_voix, wa_video}] */
+async function cxTrouver(q) {
+  q = String(q || "").trim();
+  if (/^[+\d][\d\s./()-]{5,}$/.test(q)) return { liste: [{ nom: cxTelVu(q), numeros: [{ num: cxTel(q) }] }], repertoire: true };
+  var sq = cxSimple(q), res = [], vus = {};
+  var app = dt.concat((cxS.contacts || []).map(function (c) { return { nom: c.nom, tel: c.tel }; }));
+  app.forEach(function (c) {
+    var sn = cxSimple(c.nom);
+    if (!c.tel || !(sn === sq || sn.indexOf(sq) >= 0 || sq.split(" ").every(function (m) { return sn.indexOf(m) >= 0; }))) return;
+    var t = cxTel(c.tel); if (vus[t]) return; vus[t] = 1;
+    res.push({ nom: c.nom, numeros: [{ num: t }], exact: sn === sq });
+  });
+  var rep = await cxAutoriseContacts();
+  if (rep) {
+    try {
+      JSON.parse(window.ClaireApp.chercherContacts(q)).forEach(function (c) {
+        var nums = c.numeros.filter(function (n) { return !vus[cxTel(n.num)]; });
+        var deja = res.find(function (r) { return cxSimple(r.nom) === cxSimple(c.nom); });
+        if (deja) { deja.wa_voix = c.wa_voix; deja.wa_video = c.wa_video; nums.forEach(function (n) { deja.numeros.push(n); }); }
+        else if (nums.length || c.wa_voix) res.push({ nom: c.nom, numeros: nums.length ? nums : c.numeros, wa_voix: c.wa_voix, wa_video: c.wa_video, exact: cxSimple(c.nom) === sq });
+        nums.forEach(function (n) { vus[cxTel(n.num)] = 1; });
+      });
+    } catch (e) {}
+  }
+  var ex = res.filter(function (r) { return r.exact; });
+  return { liste: ex.length === 1 ? ex : res, repertoire: rep };
+}
+function cxNumPrincipal(c) {
+  var n = c.numeros;
+  return (n.find(function (x) { return x.principal; }) || n.find(function (x) { return /mobile|portable|gsm/i.test(x.type || ""); }) || n[0] || {}).num;
+}
+function cxListe(l) {
+  return l.slice(0, 6).map(function (c, i) { return (i + 1) + ". " + c.nom + " (" + c.numeros.map(function (n) { return (n.type ? n.type + " " : "") + cxTelVu(n.num); }).join(", ") + ")"; }).join(" ; ");
+}
+function cxPasTrouve(q, r) {
+  return "Erreur : je ne trouve aucun contact « " + q + " »" + (r.repertoire ? " (ni dans l'appli, ni dans le répertoire du téléphone)" : window.ClaireApp && window.ClaireApp.contactsOk ? " dans l'appli (l'accès au répertoire du téléphone n'est pas autorisé)" : " dans l'appli") + ". Demande le numéro à Ahmed ou un autre nom.";
+}
+/** après l'appel lancé, la conversation avec Claire se ferme (le téléphone prend le micro) */
+function cxApresAppel(lancer) {
+  setTimeout(function () { lancer(); setTimeout(function () { try { rk(); } catch (e) {} }, 900); }, 2600);
+}
+tk.appeler = async function (p) {
+  if (Np()) return "Refusé : le téléphone est verrouillé. Dis à Ahmed de le déverrouiller pour appeler.";
+  var q = String(p.numero_ou_nom || "").trim(), wa = p.via === "whatsapp", A = window.ClaireApp;
+  if (!q) return "Erreur : qui faut-il appeler ? Demande le nom ou le numéro.";
+  var r = await cxTrouver(q), l = r.liste;
+  if (!l.length) return cxPasTrouve(q, r);
+  if (l.length > 1) return "Plusieurs contacts correspondent : " + cxListe(l) + ". Demande à Ahmed lequel, puis rappelle cet outil avec le nom complet ou le numéro.";
+  var c = l[0], num = cxNumPrincipal(c), qui = c.nom + (c.numeros.length > 1 ? " (" + (c.numeros.find(function (x) { return x.num === num; }).type || "numéro") + " " + cxTelVu(num) + ")" : "");
+  if (!p.confirme) return "Contact trouvé : " + qui + ". Demande d'abord à Ahmed : « J'appelle " + c.nom + (wa ? (p.video ? " en vidéo sur WhatsApp" : " sur WhatsApp") : "") + " ? ». S'il dit oui, rappelle cet outil avec confirme=true et le même numero_ou_nom.";
+  if (wa) {
+    if (c.wa_voix || c.wa_video) {
+      var id = String(p.video && c.wa_video ? c.wa_video : c.wa_voix || c.wa_video);
+      cxApresAppel(function () { if (!A.appelWhatsApp(id, !!p.video && !!c.wa_video)) td("https://wa.me/" + cxTel(num).replace("+", "")); });
+      return "Appel WhatsApp lancé vers " + c.nom + ". Dis seulement « J'appelle " + c.nom + " sur WhatsApp », en quelques mots : la conversation va se fermer.";
+    }
+    cxApresAppel(function () { td("https://wa.me/" + cxTel(num).replace("+", "")); });
+    return "Je ne peux pas lancer l'appel WhatsApp directement pour ce contact : j'ouvre sa conversation WhatsApp. Dis à Ahmed de toucher l'icône du téléphone en haut, en une phrase : la conversation va se fermer.";
+  }
+  if (A && A.appelerDirect) {
+    cxApresAppel(function () { A.appelerDirect(cxTel(num)); });
+    return "Appel de " + qui + " lancé. Dis seulement « J'appelle " + c.nom + " », en quelques mots : la conversation va se fermer. (La toute première fois, le téléphone demande l'autorisation de passer des appels : Ahmed doit toucher Autoriser.)";
+  }
+  setTimeout(function () { td("tel:" + cxTel(num)); }, 600);
+  return "Le téléphone est prêt à appeler " + qui + " : Ahmed doit toucher Appeler.";
+};
+tk.envoyer_whatsapp = async function (p) {
+  if (Np()) return "Refusé : le téléphone est verrouillé. Dis à Ahmed de le déverrouiller.";
+  var q = String(p.numero_ou_nom || "").trim(), msg = p.message || "";
+  if (!q) { setTimeout(function () { td("https://wa.me/?text=" + encodeURIComponent(msg)); }, 600); return "WhatsApp est ouvert avec le message prêt : Ahmed choisit le contact puis touche Envoyer."; }
+  var r = await cxTrouver(q), l = r.liste;
+  if (!l.length) return cxPasTrouve(q, r);
+  if (l.length > 1) return "Plusieurs contacts correspondent : " + cxListe(l) + ". Demande à Ahmed lequel, puis rappelle cet outil avec le nom complet ou le numéro.";
+  var c = l[0], num = cxTel(cxNumPrincipal(c));
+  setTimeout(function () { td("https://wa.me/" + num.replace("+", "") + "?text=" + encodeURIComponent(msg)); }, 600);
+  return "WhatsApp est ouvert sur la conversation avec " + c.nom + ", le message est écrit : Ahmed n'a plus qu'à toucher Envoyer (WhatsApp ne permet pas d'envoyer à sa place).";
+};
