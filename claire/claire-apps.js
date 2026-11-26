@@ -260,3 +260,49 @@ tk.rappel_lieu = async function (p) {
     }
   };
 })();
+
+/* ---------- Claire+ : couleurs selon l'humeur de la conversation ----------
+   Le rond et la lumière du fond changent doucement de teinte :
+   calme (bleu) · chaleur (orangé-rose) · joie (doré) · souci (bleu nuit) · urgent (rouge) · réflexion (violet). */
+(function () {
+  var H = {
+    calme:   ["#45c8ff", "#6f7dff", "#b28cff"],
+    chaleur: ["#ffb36b", "#ff7eb6", "#c58cff"],
+    joie:    ["#ffd166", "#ff9f6b", "#ff7eb6"],
+    souci:   ["#7aa2ff", "#4f5fd6", "#8b7bff"],
+    urgent:  ["#ff6b6b", "#ff3d7f", "#ffb36b"],
+    reflexion: ["#9b8cff", "#6f7dff", "#d08cff"]
+  };
+  var css = "@property --p{syntax:'<color>';inherits:true;initial-value:#45c8ff}@property --v{syntax:'<color>';inherits:true;initial-value:#6f7dff}@property --o{syntax:'<color>';inherits:true;initial-value:#b28cff}" +
+    "#orb,.aur{transition:--p 1.4s ease,--v 1.4s ease,--o 1.4s ease}" +
+    ".aur i:nth-child(1){background:color-mix(in srgb,var(--p) 25%,transparent)!important}.aur i:nth-child(2){background:color-mix(in srgb,var(--v) 40%,transparent)!important}.aur i:nth-child(3){background:color-mix(in srgb,var(--o) 25%,transparent)!important}" +
+    "#orb .core{box-shadow:inset 0 -18px 40px #1b2a7a66,0 20px 50px color-mix(in srgb,var(--p) 30%,transparent)!important}";
+  Object.keys(H).forEach(function (k) { css += "body[data-humeur=" + k + "] #orb,body[data-humeur=" + k + "] .aur{--p:" + H[k][0] + ";--v:" + H[k][1] + ";--o:" + H[k][2] + "}"; });
+  var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+
+  var fixe = "calme", tFixe = 0;
+  function pose(h, ms) { fixe = h; tFixe = Date.now() + (ms || 25000); maj(); }
+  function maj() {
+    var s = document.body.dataset.state;
+    var h = Date.now() < tFixe ? fixe : "calme";
+    if (s === "thinking" && h === "calme") h = "reflexion";
+    if (s === "idle" || s === "wake") h = "calme";
+    if (document.body.dataset.humeur !== h) document.body.dataset.humeur = h;
+  }
+  setInterval(maj, 700);
+  /** devine l'humeur d'un message (balises de voix de Claire, puis mots) */
+  function humeur(qui, t) {
+    var tags = (String(t).match(/\[([^\]]{1,30})\]/g) || []).join(" ").toLowerCase(), x = String(t).toLowerCase();
+    if (/urgen|alarm|serious|grave/.test(tags) || /urgent|🚨|tout de suite|immédiatement|danger|accident|عاجل|ضروري/.test(x)) return "urgent";
+    if (/laugh|chuckl|happy|excit|cheer|giggl/.test(tags) || /haha|😂|😄|bravo|félicitations|génial|super nouvelle|excellent|top !|mabrouk|مبروك|هههه/.test(x)) return "joie";
+    if (/sad|sorry|concern|worr|sympath|sigh|disappoint/.test(tags) || /désolée?|malheureusement|pas réussi|n'arrive pas|impossible|erreur|problème|inquiet|stress|triste|fatigué|كنعتاذر|مشكل/.test(x)) return "souci";
+    if (/warm|soft|gentle|kind|tender|cheerful/.test(tags) || (qui === "user" && /merci|t'es la meilleure|parfait|nickel|شكرا|بارك الله/.test(x))) return "chaleur";
+    return "";
+  }
+  var rdH = rd;
+  rd = function (qui, texte) {
+    rdH(qui, texte);
+    var h = humeur(qui, texte);
+    if (h) pose(h, h === "urgent" ? 40000 : 25000);
+  };
+})();
