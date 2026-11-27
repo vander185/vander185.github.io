@@ -9,6 +9,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://vmhznuivhwwfphmypsic.supabase.co">
 <title>Réglages de Claire</title>
 <link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://vmhznuivhwwfphmypsic.supabase.co" crossorigin>
 <style>
 :root{--bg:#081030;--card:#ffffff0b;--line:#ffffff16;--txt:#f2f6ff;--mut:#9fb0d4;--p:#45c8ff;--v:#8f7dff;--grad:linear-gradient(120deg,var(--p),var(--v))}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -53,7 +54,8 @@ h2{letter-spacing:.01em}
 <div id="toast"></div>
 <a href="./" class="back">← Claire</a>
 <div class="top"><img src="icon-192.png" alt=""><h1>Réglages de <span>Claire</span></h1></div>
-<p class="mut">Page privée.</p>
+<p class="mut">Page privée. <span id="maj" hidden>· ⟳ mise à jour…</span></p>
+<p id="chg" class="mut" style="text-align:center;margin-top:40px" hidden>⏳ Chargement des réglages…</p>
 <div id="lock" hidden><p>🔒 Entre d'abord ton code personnel dans l'appli Claire (bouton 🔑).</p><p><a href="./">← Retour à Claire</a></p></div>
 <div id="app" hidden>
   <details class="sec" open><summary><h2>✨ Pouvoirs de Claire</h2></summary>
@@ -181,11 +183,12 @@ async function call(op, data = {}, btn) {
     const r = L ? await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ l: L, op, ...data }) })
       : await fetch(API2, { method: 'POST', headers: { 'content-type': 'application/json', 'x-claire-app': CODE }, body: JSON.stringify({ op, ...data }) });
     const j = await r.json();
-    if (r.status === 403 || r.status === 429) { $('#app').hidden = true; $('#lock').hidden = false; if (L) try { localStorage.removeItem('claire_reglages'); } catch (e) {} if (j.erreur) toast(j.erreur, 5000); return; }
+    if (r.status === 403 || r.status === 429) { try { localStorage.removeItem('claire_reglages_cache'); } catch (e) {} $('#app').hidden = true; $('#lock').hidden = false; if (L) try { localStorage.removeItem('claire_reglages'); } catch (e) {} if (j.erreur) toast(j.erreur, 5000); return; }
     if (j.msg) toast(j.msg, j.msg.startsWith('⚠️') ? 6000 : 2800);
     draw(j);
+    try { localStorage.setItem('claire_reglages_cache', JSON.stringify(j)); } catch (e) {}
   } catch (e) { toast('⚠️ Pas de connexion, réessaie.'); if (op === 'get' && $('#app').hidden) { $('#lock').innerHTML = '<p>📡 Pas de connexion pour l’instant.</p><p><button id="retry" class="s" type="button">Réessayer</button></p><p><a href="./">← Retour à Claire</a></p>'; $('#lock').hidden = false; $('#retry').onclick = () => { $('#lock').hidden = true; call('get'); }; } }
-  finally { if (btn) btn.disabled = false; }
+  finally { if (btn) btn.disabled = false; if (op === 'get') { $('#maj').hidden = true; $('#chg').hidden = true; } }
 }
 function draw(j) {
   $('#app').hidden = false; $('#lock').hidden = true;
@@ -302,7 +305,12 @@ document.addEventListener('click', e => {
 // téléphone verrouillé (appli Claire ouverte par-dessus l'écran de verrouillage) : les réglages restent fermés
 let verrou = false; try { verrou = !!(window.ClaireApp && window.ClaireApp.isLocked && window.ClaireApp.isLocked()); } catch (e) {}
 if (verrou) { $('#lock').innerHTML = '<p>🔒 Déverrouille ton téléphone pour ouvrir les réglages de Claire.</p><p><a href="./">← Retour à Claire</a></p>'; $('#lock').hidden = false; }
-else if (L || CODE) { call('get'); if (L && CODE) plus('get'); } else $('#lock').hidden = false;
+else if (L || CODE) {
+  // affichage immédiat avec les derniers réglages connus, puis mise à jour depuis le serveur
+  let vu = false; try { const c = JSON.parse(localStorage.getItem('claire_reglages_cache') || 'null'); if (c) { draw(c); vu = true; } } catch (e) {}
+  if (vu) $('#maj').hidden = false; else $('#chg').hidden = false;
+  call('get'); if (L && CODE) plus('get');
+} else $('#lock').hidden = false;
 </script>
 </body>
 </html>
