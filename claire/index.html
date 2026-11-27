@@ -167,6 +167,30 @@ body.locked .stage:after{content:'🔒 Téléphone verrouillé : tes notes reste
 #toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));translate:-50% 20px;background:#1a2a5eee;color:#fff;padding:11px 17px;border-radius:16px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;box-shadow:0 10px 30px #0008;max-width:88vw;text-align:center;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 #toast.show{opacity:1;translate:-50% 0}
 @media (max-height:760px){#orb{width:140px;height:140px}.hello{padding-top:10px}.hello h2{font-size:23px}}
+/* ===== Affichage téléphone (27/11) =====
+   - hauteur réelle de l'écran (barre d'adresse et clavier compris) ;
+   - pendant une conversation : cercle plus petit, messages lisibles, panneau du bas toujours visible ;
+   - clavier ouvert : seuls les messages et la zone d'écriture restent, juste au-dessus du clavier. */
+html,body{height:100%;height:100dvh}
+body{height:var(--vvh,100dvh)}
+.panel{min-height:150px}
+#status{white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:385px){#status{letter-spacing:.07em;font-size:11px}#status:not(:empty):before,#status:not(:empty):after{width:12px;margin:0 6px}}
+body.talk #orb{width:118px;height:118px}
+body.talk .stage{padding-top:2px}
+body.talk #status{margin-top:8px}
+body.talk #log{max-height:none;flex:1;min-height:60px}
+body.talk .stage{flex:1 1 auto;min-height:0}
+body.talk .panel{flex:0 0 150px}
+body.talk .hello{padding-top:8px}body.talk .hello p{display:none}
+body.kbd .hello,body.kbd #chips,body.kbd .panel,body.kbd .aur{display:none}
+body.kbd .stage{flex:1 1 auto;min-height:0;justify-content:flex-end;padding-bottom:4px}
+body.kbd #orb{width:64px;height:64px;flex:none}
+body.kbd #orb .bars i{width:5px;height:10px}
+body.kbd #status{margin-top:4px}
+body.kbd #log{max-height:none;flex:1 1 auto;min-height:0}
+body.kbd #cxw{margin-bottom:8px}
+body.kbd header{padding-top:6px}
 </style>
 </head>
 <body data-state="idle">
@@ -231,5 +255,6 @@ Claire</div>
 </section>
 <div id="toast"></div>
 <script src="claire.js"></script>
+<script src="claire-mobile.js"></script>
 </body>
 </html>
